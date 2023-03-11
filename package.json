@@ -1,5 +1,5 @@
 {
-  "name": "blog-cloudflare-pages",
+  "name": "blog-astro-src",
   "type": "module",
   "version": "0.0.1",
   "scripts": {
