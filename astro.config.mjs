@@ -6,6 +6,6 @@ import react from "@astrojs/react";
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://example.com',
+  site: 'https://a.conao3.com',
   integrations: [mdx(), sitemap(), react()]
 });
