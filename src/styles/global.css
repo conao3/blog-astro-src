@@ -7,7 +7,7 @@ body {
 	font-family: Verdana, sans-serif;
 	margin: auto;
 	padding: 20px;
-	max-width: 65ch;
+	max-width: 1100px;
 	text-align: left;
 	background-color: #fff;
 	word-wrap: break-word;
@@ -45,8 +45,9 @@ table {
 	width: 100%;
 }
 img {
-	max-width: 100%;
-	height: auto;
+	max-width: 90%;
+	display: block;
+    margin: 0 auto;
 }
 code {
 	padding: 2px 5px;
