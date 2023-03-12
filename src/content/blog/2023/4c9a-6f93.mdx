@@ -1,0 +1,253 @@
+---
+title: 'Hello Astro'
+description: ''
+pubDate: '2023-03-12'
+---
+
+
+# Intro
+
+エンジニアは2~3年ごとにブログを作りなおす。私もその習性に従って新しいブログを作った。
+
+前回のブログで[新しいブログ作ったよ記事](https://conao3.com/blog/2020-c47c-f2b7/)が2020年の5月だったので、まぁそれくらいの周期でやってくる。
+
+技術まわりの備忘録を書いておいて、また3年経ったらこの記事を参照することになるだろう。
+
+なお、筆者はフロント周りの技術に疎いので、雰囲気で書いていることを添えておく。
+
+
+# Astro
+
+ベースの技術は[Astro](https://astro.build/)だ。
+Hugoと同じように静的サイトを生成するライブラリで、基本的にビルド成果物をぽん置きするだけで動く。便利。
+
+`.astro` ファイルというHTMLとJSXを悪魔合体させたようなもの (そもそもJSXがJSとHTMLを悪魔合体させたようなものだが) が提供されており、
+これを使ってコンポーネントベースでページを作る。
+
+一方でReactやVueのようなUIフレームワークを使うこともできる。その場合でも `astro build` するとjsファイルなしで静的サイトが生成される。
+
+
+## Getting Started
+
+[公式のGetting started](https://docs.astro.build/ja/getting-started/)が丁寧に書いてあるのでそれに従う。厨二なのでyarnを使った。(最近はnpmへの揺り戻しが起こっているらしい)
+
+```bash
+yarn create astro
+```
+
+して、適当にプロンプトに答えるとastroプロジェクトが生成される。
+
+```bash
+yarn dev
+```
+
+でローカルサーバーが立つ。すばらしい。
+
+![](/blob/2023/e3345de2-90c1-4ee9-959c-a901b28af2e9.png)
+
+(絵文字が豆腐になっているが、これはOSに絵文字に対応したフォントをインストールしてないからである。)
+
+Nextのようにファイルベースルーティングを採用しているので、 `content/blog` 配下にmdファイルを置くとそのままブログ記事になる。
+
+当然のこと (便利な世の中になった) ながら、ライブリロードが入っているので、mdファイルを編集すると即座にブラウザに反映される。
+
+
+## .astro入門
+
+現在時点の公式ブログテンプレートにはなぜか `draft` の対応が入っていない。ので、この対応をすることで `.astro` の基本的な使い方を紹介する。
+
+まずは `src/content/config.ts` でfrontmatterに `draft` があるということを定義する。デフォルトは `false` (公開) にしておく。
+
+```diff
+ import { defineCollection, z } from 'astro:content';
+
+ const blog = defineCollection({
+   // Type-check frontmatter using a schema
+   schema: z.object({
+     title: z.string(),
+     description: z.string(),
+     // Transform string to Date object
+     pubDate: z
+       .string()
+       .or(z.date())
+       .transform((val) => new Date(val)),
+     updatedDate: z
+       .string()
+       .optional()
+       .transform((str) => (str ? new Date(str) : undefined)),
+     heroImage: z.string().optional(),
++    draft: z.boolean().default(false),
+    }),
+ });
+```
+
+そして `src/pages/blog/index.astro` で `draft` が `false` な記事のみをリストするように修正する。
+
+```diff
+ ---
+ import BaseHead from '../../components/BaseHead.astro';
+ import Header from '../../components/Header.astro';
+ import Footer from '../../components/Footer.astro';
+ import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
+ import { getCollection } from 'astro:content';
+ import FormattedDate from '../../components/FormattedDate.astro';
+
+ const posts = (
+-    (await getCollection('blog'))
++    (await getCollection('blog', ({ data }) => !data.draft))
+     .sort((a, b) => a.data.pubDate.valueOf() - b.data.pubDate.valueOf())
+ )
+ ---
+```
+
+これで完了だ。便利。
+
+
+## Reactとの連携
+
+そもそも `.astro` ファイルでコンポーネントを使いつつ、propを渡して、、ということができるので、静的に決まるならReactは不要。とはいえミーハーなので動作確認くらいはしておく。
+
+ドキュメントの[UIフレームワークのページ](https://docs.astro.build/ja/core-concepts/framework-components/)や[@astrojs/react](https://docs.astro.build/ja/guides/integrations-guide/react/)を参照しつつ、Reactのコンポーネントを使ってみる。
+
+まず `astro add` する。
+
+```bash
+yarn astro add react
+```
+
+題材はなんでも良いが、動的な要素がないコンポーネントを実装したい。
+今回は[CalloutBlock](https://quarto.org/docs/authoring/callouts.html)を実装してみる。
+
+`src/components/SimpleCalloutBlock.tsx` を以下の内容で作る。色は[Adobe Spectrum](https://spectrum.adobe.com/page/color-palette/)からもらった。
+
+```tsx
+type SimpleCalloutBlockProps = {
+  title: string;
+  children: React.ReactNode;
+};
+
+export function SimpleCalloutBlock(props: SimpleCalloutBlockProps) {
+  const divheader = (
+    <div style={{
+      backgroundColor: "rgb(255, 221, 214)",  // Red 200
+      padding: "0.25rem",
+      fontWeight: "bold",
+    }}>{props.title}</div>
+  )
+  const divcontent = (
+    <div style={{
+      padding: "0.25rem",
+    }}>{props.children}</div>
+  )
+
+  return <>
+    <div style={{
+      borderRadius: "0.25rem",
+      border: "1px solid",
+      borderColor: "rgb(213, 213, 213)",  // Gray 300
+      borderLeft: "5px solid",
+      borderLeftColor: "rgb(247, 92, 70)",  // Red 800
+    }}>
+      {divheader}
+      {divcontent}
+    </div>
+  </>
+}
+```
+
+`.astro` ファイルでは以下のように利用できる。
+
+```astro
+import SimpleCalloutBlock from '../../components/SimpleCalloutBlock.tsx';
+---
+<SimpleCalloutBlock title="This is Important">Danger, callouts will really improve your writing.</SimpleCalloutBlock>
+```
+
+さらにAstroはmdxをサポートしているので、なんとmdの中に直接tsxを書くこともできる
+
+```mdx
+import SimpleCalloutBlock from '../../components/SimpleCalloutBlock.tsx';
+
+<SimpleCalloutBlock title="This is Important">Danger, callouts will really improve your writing.</SimpleCalloutBlock>
+```
+
+レンダリング結果はこんな感じ。
+
+import { SimpleCalloutBlock } from '../../../components/SimpleCalloutBlock';
+
+<SimpleCalloutBlock title="This is Important">Danger, callouts will really improve your writing.</SimpleCalloutBlock>
+
+`SimpleCalloutBlock` はReactを使って作ったが、ビルドするとjsなしの静的なHTMLとCSSになる。便利。
+
+
+## Astro Islands
+
+Astroには[Astroアイランド](https://docs.astro.build/ja/concepts/islands/)という概念がある。
+これによりページの一部のコンポーネントのみインタラクティブ (jsあり) の領域を作ることできる。
+
+アイランドはそれぞれ独立しており、それぞれは異なるUIフレームワークを使うことができる。
+(Spotifyの[マイクロフロントエンド](https://engineering.mercari.com/blog/entry/2018-12-06-162827/)みたいなのを想像している)
+
+これも動作確認程度に動かしておく。
+
+Reactで簡単なカウンターを `src/components/SimpleButton.tsx` に実装する。
+
+```tsx
+import React from "react"
+
+export function SimpleButton() {
+  const [count, setCount] = React.useState(0)
+  return <button onClick={()=>setCount(count+1)}>Click me: {count}</button>
+}
+```
+
+そして利用側でこのように記述する。
+```md
+import { SimpleButton } from '../../../components/SimpleButton';
+
+<SimpleButton client:load />
+```
+
+import { SimpleButton } from '../../../components/SimpleButton';
+
+<SimpleButton client:load />
+
+`client:load` を付けることで、このコンポーネントに限り、jsをクライアントで実行するように設定できる。
+もし付けなければこれは静的なコンポーネントになるので、カウンターは動かない。
+
+<SimpleButton />
+
+jsが読み込まれるタイミングを `client:*` で制御できる。詳細は[ドキュメント](https://docs.astro.build/ja/reference/directives-reference/#client-directives)を参照。
+
+
+# Cloudflare Pages
+
+ホスティングは[Cloudflare Pages](https://www.cloudflare.com/ja-jp/products/pages/)を使う。
+以前使っていたNetlifyでも良かったが、界隈で[Cloudflare Pagesが注目](https://blog.tomoya.dev/posts/i-was-billed-beyond-limits-of-netlify/)されていたのでそれにした。
+
+使い勝手はNetlifyとほぼ同じ。GitHubと連携して、pushすると自動でビルド/デプロイされる。便利。
+
+![](/blob/2023/51ca883a-a3cc-4d9d-a36f-c8f650f842b0.png)
+
+少し悩んだのが、カスタムドメインの設定。
+
+conao3.comをNetlifyのDNSに置いて、そのままNetlifyを向くように設定していたので新しいastroのブログをどのURLで公開するか悩んだ。
+
+ひとまずNetlifyに置いてあるドメインはそのままにしておいて、CNAME a.conao3.comでastroのブログを見るように設定した。 (`a` は `astro` の `a`)
+
+![](/blob/2023/31448b5e-7760-47de-9d3a-c10809fc7424.png)
+
+将来的にはNetlifyに置いてあるブログを h.conao3.com くらいで見れるようにしたらいいのかなと思う。 (`h` は `hugo` の `h`)
+
+ついでにドメインをNetlifyからCloudflareに引っ越しすると良いかもしれない。リダイレクトの設定が面倒なので、また時間が取れるときにやる。
+
+
+# まとめ
+
+感想としてはAstroが便利すぎる。全部入りで速い。コンテンツ中心のウェブページを作るならこれが最初の選択肢になりそう。
+
+ブログのソースは[conao3/blog-astro-src](https://github.com/conao3/blog-astro-src)に置くことにした。
+各ページから直接ソースのmdに飛べるようにしたら便利かもしれない。
+
+ひとまずスモールスタートとして直接マークダウンを書いたが、Emacsユーザーとしてはox-hugoと同じように一つのorgファイルから複数のページを生成できるようにしたい。
+
