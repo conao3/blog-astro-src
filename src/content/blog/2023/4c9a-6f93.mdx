@@ -1,6 +1,5 @@
 ---
 title: 'Hello Astro'
-description: ''
 pubDate: '2023-03-12'
 ---
 
@@ -65,7 +64,6 @@ Nextのようにファイルベースルーティングを採用しているの�
    // Type-check frontmatter using a schema
    schema: z.object({
      title: z.string(),
-     description: z.string(),
      // Transform string to Date object
      pubDate: z
        .string()
@@ -88,7 +86,7 @@ Nextのようにファイルベースルーティングを採用しているの�
  import BaseHead from '../../components/BaseHead.astro';
  import Header from '../../components/Header.astro';
  import Footer from '../../components/Footer.astro';
- import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
+ import { SITE_TITLE } from '../../consts';
  import { getCollection } from 'astro:content';
  import FormattedDate from '../../components/FormattedDate.astro';
 
