@@ -102,6 +102,21 @@ Nextのようにファイルベースルーティングを採用しているの�
 
 これで完了だ。便利。
 
+[追記] `src/pages/blog/[...slug].astro` にもdraft対応が必要。
+
+```diff
+ export async function getStaticPaths() {
+ 	return (
+-        (await getCollection('blog'))
++        (await getCollection('blog', ({ data }) => !data.draft))
+         .map((post) => ({
+             params: { slug: post.slug },
+             props: post,
+         }))
+     );
+ }
+```
+
 
 ## Reactとの連携
 
@@ -250,4 +265,3 @@ conao3.comをNetlifyのDNSに置いて、そのままNetlifyを向くように�
 各ページから直接ソースのmdに飛べるようにしたら便利かもしれない。
 
 ひとまずスモールスタートとして直接マークダウンを書いたが、Emacsユーザーとしてはox-hugoと同じように一つのorgファイルから複数のページを生成できるようにしたい。
-
