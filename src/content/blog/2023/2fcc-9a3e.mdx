@@ -1,0 +1,278 @@
+---
+title: '2023年のPython環境構築: pyenv + poetry'
+pubDate: '2023-03-14'
+---
+
+# Intro
+
+[Pythonのパッケージ管理ベストプラクティス - Qiita](https://qiita.com/c60evaporator/items/b6a7394231d1e768ce64)という記事が公開されていた。
+とはいえ少々overwhelmingな感があるので、ざっくりといつもやっている手順をまとめる。
+
+お気持ちを書くと結局この記事も同じ轍を踏むので、お気持ちパートは後半で。
+
+
+# 方針
+
+- `anyenv` を入れる
+- `pyenv` でPythonを入れる
+- `poetry` でPythonプロジェクトを管理する
+
+これが最短最小のセットアップだ。
+
+私もVMを起動してクリーンな環境で試しつつこの記事を書いてみる。
+
+
+## anyenvのインストール
+
+昨今、Pythonだけ必要なことはあまりなく、どうせNodeなどが欲しくなるので、最初からanyenvを入れる。
+
+```bash
+git clone https://github.com/anyenv/anyenv ~/.anyenv
+
+export PATH="$HOME/.anyenv/bin:$PATH"
+echo 'export PATH="$HOME/.anyenv/bin:$PATH"' >> ~/.bash_profile
+```
+
+```bash
+anyenv init
+```
+
+```bash
+eval "$(anyenv init -)"
+echo 'eval "$(anyenv init -)"' >> ~/.bash_profile
+```
+
+```bash
+anyenv install --init
+```
+
+これで `anyenv` が使えるようになった
+
+
+## pyenvのインストール
+
+`anyenv` を手に入れたので、 `pyenv` は `anyenv` 経由でインストールできる。
+
+```bash
+anyenv install pyenv
+
+eval "$(anyenv init -)"
+```
+
+`pyenv install -l` でインストール可能なPythonのバージョンを確認できる。
+
+使いたいバージョンのPythonを適宜インストールする。強い理由がなければ `x.yy.zz` のフォーマットの最新のバージョンを入れる。最新だからと言って不安定だということは (経験上ほぼ) ない。
+
+コマンドをこねこねするとインストールできる最新のバージョンを得ることができる。
+
+```bash
+$ pyenv install -l | sed -E 's/^ +//' | grep -E '^3\.11\.[0-9]+$' | tail -n1
+3.11.2
+
+$ pyenv install -l | sed -E 's/^ +//' | grep -E '^3\.10\.[0-9]+$' | tail -n1
+3.10.10
+
+$ pyenv install -l | sed -E 's/^ +//' | grep -E '^3\.9\.[0-9]+$' | tail -n1
+3.9.16
+```
+
+さてインストール。。の前に [pyenvのwiki](https://github.com/pyenv/pyenv/wiki) にOS別の依存パッケージインストール方法が記載されているのでそれを実行する。
+
+私はArchlinuxを使っているので `pacman` の手順を実行した。
+
+```bash
+pacman -S --needed base-devel openssl zlib xz tk
+```
+
+さぁ、Pythonをインストールする。
+
+```bash
+pyenv install 3.11.2
+pyenv install 3.10.10
+pyenv install 3.9.16
+```
+
+無事インストールできたら `python` で起動するpythonをpyenvでインストールしたものに変更する。
+
+```bash
+pyenv global 3.11.2 3.10.10 3.9.16
+```
+
+インストールできない場合、pyenv wikiの[Common build Problems](https://github.com/pyenv/pyenv/wiki/Common-build-problems)を参照する。
+それでもできなかったらおとなしくOSからクリーンインストールした方が早い。
+
+
+## poetryのインストール
+
+[poetry](https://python-poetry.org/docs/) はPythonのプロジェクト管理ツールである。
+プロジェクトに合ったPythonを選んだり、依存関係を解決したり、一回解決したものをロックファイルとして保存/共有することができる。
+
+公式ページのインストール手順に従ってインストールする。
+
+```bash
+curl -sSL https://install.python-poetry.org | python3 -
+```
+
+`~/.local/bin/` に `poetry` がインストールされるので、 `PATH` に追加されてなかったら追加する。
+
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bash_profile
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+poetryのデフォルトではプロジェクトルートに `.venv` を作らないため、プロジェクトルートに作成するように変更する。
+VSCodeが自動的に仮想環境を見つけてくれるし、定義ジャンプするときにツリーが見えるので便利。
+
+```bash
+poetry config virtualenvs.in-project true
+```
+
+これでpoetryがインストールできた。環境構築は以上だ。
+
+
+# 運用方法
+
+ここでは簡単な `wc` コマンドを実装する。
+
+フォルダを作って `poetry init` すると `pyproject.toml` が作成される。
+
+```bash
+mkdir pywc
+cd pywc
+poetry init
+```
+
+本体を実装して、 `pyproject.toml` に `pywc` という名前でエントリポイントを登録する。
+
+```bash
+mkdir -p src/pywc
+touch src/pywc/__init__.py
+touch src/pywc/main.py
+```
+
+`src/pywc/main.py` は以下の内容。
+
+```python
+def cli():
+    print(len(input()))
+```
+
+`pyproject.toml` に以下の変更をする。
+
+```diff
+ authors = ["Your Name <you@example.com>"]
+ readme = "README.md"
+
++[tool.poetry.scripts]
++pywc = "pywc.main:cli"
++
+ [tool.poetry.dependencies]
+ python = "^3.11"
+```
+
+そして `poetry install` する。
+
+```bash
+poetry install
+```
+
+すると仮想環境内に `pywc` というコマンドがインストールされる。
+仮想環境内のコマンドは `poetry run` で実行できる。
+
+```bash
+$ echo asdf | poetry run pywc
+4
+```
+
+ちゃんと動いている。
+
+もしグローバルでこのコマンドが使いたいなら `~/.local/bin/` にシンボリックリンクを貼る。
+
+```bash
+$ ln -s "$(poetry run which pywc)" ~/.local/bin/
+
+$ echo asdf | pywc
+4
+```
+
+これでいつでも使える。便利だ。
+
+
+# まとめ
+
+いろいろ思うところがあったのだけど、Twitterで書くよりブログで書いた方が参照しやすくて便利なのでこの形式で公開することにした。
+
+正直Pythonユーザーの半数。いや、7割。。？くらいは[PyPI](https://pypi.org/)に自作モジュールを公開なんてせずに単にユーザーとして利用するだけだと思う。
+単に使うだけならPythonってこんなに便利なんですよというのを伝えたかった。
+
+モジュールもたくさんあるし、プロトタイピングには最適な言語だと思う。
+
+
+# お気持ち
+
+## なぜ公式インストーラではなくpyenvなのか
+
+インストーラでインストールするとシステム領域にインストールされる。もちろん全ての作業は仮想環境を作って行うので問題ないのだが、万一環境が壊れたときにアンインストールが必要になる。
+
+さて、そのアンインストーラはちゃんと動くのだろうか。インストーラが展開したファイルを一つ残らず消してくれるのだろうか。
+
+pyenvならバージョンごとにフォルダ管理されており、コマンドから捨てることができるし、最悪 `~/.anyenv` ごと吹き飛ばせばいい。
+
+「クリーンな状態」をすぐ取り戻せるというのは心の余裕だ。「すぐ戻せる」から壊すハードルを下げることができる。
+
+
+## なぜ公式インストーラではなくpyenvなのか2
+
+そもそも、その「公式インストーラ」はどこにあるのだろう。。()
+
+[python.org/downloads](https://www.python.org/downloads/)だと思うが、WindowsとmacOSの場合はGUIのインストーラっぽいからぽちぽちしたら入るっぽい。
+Linux勢はどうやってインストールするのだろう。各ディストリビューションごとにパッケージ名が違うのをまず調べてからインストールすることになる。
+
+うーん。pyenvならマルチプラットフォームで同じように開発できるのでこちらを取るかな。。
+
+「インストーラ」が何をやっているのか分からないのが嫌なのかもしれない。「アンインストーラ」が信用できないのも。
+
+Linuxのパッケージマネージャでも `pacman` は信用しているが、 `apt` は信用してない。(インストールしてアンインストールしたらちゃんと元に戻るという観点で)
+
+その意味ではmacOS/Linuxの `brew` はちゃんとパッケージマネージャとしての責務を果たしてくれるので好き。
+
+
+## なぜvenvを直接使わずpoetryを使うのか
+
+正直 `venv` は難しい。初学者に勧めるのは抵抗がある。もちろん言ってることは分かるし、venvで開発できそうなことは分かったが周辺のノウハウが散らばっているように感じた。
+
+OSSでも `poetry.lock` が置いてあるプロジェクトは本当に貢献しやすい。 `git clone` して `poetry install` 。これで全ての依存が降ってきてすぐ開発できる状況になる。
+
+これは業務で使う場合でも一緒だ。みんながみんなPythonのビルドシステム周りに詳しいわけではない。 `poetry install` して `poetry run hoge` で動く。案内しやすいし便利だ。
+
+ここまで書いたが、 `venv` ももうちょっと分かりやすいサブコマンドがあると良い話なのかもしれない。
+
+| poetry            | venv                           | venv (提案)                 |
+|-------------------|--------------------------------|----------------------------| 
+| `poetry init`     | `python -m venv .venv`         | `python -m venv init`      |
+| `poetry add hoge` | `pip install hoge`             | `python -m venv add hoge`  |
+| `poetry lock`     | `pip freeze > requirements.txt`| `python -m venv lock`      |
+| `poetry install`  | `pip install -r requirements.txt` | `python -m venv install`|
+| `poetry shell`    | `. .venv/bin/activate`         | `python -m venv shell`     |
+| `C-d` (exit venv) | `deactivate`                   | `C-d`                      |
+| `poetry run hoge` | `.venv/bin/hoge`               | `python -m venv run hoge`  |
+
+提案のvenvなら使えたかもしれない。
+
+仮想環境に入るのを忘れて `pip install` したらもれなくグローバルのPythonにインストールされるのも心象が悪かった。
+
+さらに `. .venv/bin/activate` で仮想環境に入って、出るときは `deactivate` を実行するという非対称性にも耐えられなかった。
+`. .venv/bin/deactivate` ならまだ許容できたが、まぁ歴史あるものはしょうがない面もある。
+
+
+## なぜPythonがインストールできないときOSのクリーンインストールをするのか
+
+> インストールできない場合、pyenv wikiのCommon build Problemsを参照する。 それでもできなかったらおとなしくOSからクリーンインストールした方が早い。
+
+読者の中にはちゃんとビルドできない原因を調べて解明する方が良いと思う人もいると思う。
+
+[Common build Problems](https://github.com/pyenv/pyenv/wiki/Common-build-problems)を参照した上でもPythonがビルドすらできない環境というのは十中八九、本人すらも自分のPCの状態が管理できてない状態だと思う。
+Pythonのインストーラに限らず、自分で制御できる方法でPCを常にメンテナンスすることが必要で、一旦制御不能になったらもうそれは教訓にして世界をやり直した方が早い。
+
+やり直すのは悪いことではない。どうやったら簡単にやり直せるか考えて整備する。
+簡単にやり直せるようになったところで、もう世界をやり直さないと分からないところまで壊れることはほぼなくなっているが、そうやって学ぶのが結局早い。
