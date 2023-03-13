@@ -46,8 +46,23 @@ echo 'eval "$(anyenv init -)"' >> ~/.bash_profile
 anyenv install --init
 ```
 
-これで `anyenv` が使えるようになった
+これで `anyenv` が使えるようになった。
 
+
+## anyenv-updateのインストール
+
+[znz/anyenv-update](https://github.com/znz/anyenv-update) をインストールする。
+これは `anyenv update` でインストールされている `*env` をアップデートできるようにするプラグイン。
+
+アップデートしないと新しいPythonをインストールできないので、インストール前にはこのサブコマンドが使えると便利。
+
+
+```bash
+mkdir -p $(anyenv root)/plugins
+git clone https://github.com/znz/anyenv-update.git $(anyenv root)/plugins/anyenv-update
+```
+
+これで `anyenv update` ができるようになった。
 
 ## pyenvのインストール
 
@@ -63,7 +78,7 @@ eval "$(anyenv init -)"
 
 使いたいバージョンのPythonを適宜インストールする。強い理由がなければ `x.yy.zz` のフォーマットの最新のバージョンを入れる。最新だからと言って不安定だということは (経験上ほぼ) ない。
 
-コマンドをこねこねするとインストールできる最新のバージョンを得ることができる。
+コマンドをこねこねすると現在インストールできる最新のバージョンを得ることができる。
 
 ```bash
 $ pyenv install -l | sed -E 's/^ +//' | grep -E '^3\.11\.[0-9]+$' | tail -n1
