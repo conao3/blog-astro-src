@@ -1,0 +1,185 @@
+---
+title: 'パッケージをささっと試すためのplayground - Python'
+pubDate: 2023-03-19
+---
+
+# はじめに
+
+Pythonには様々なパッケージがあり、簡単にインストールして使うことができます。
+しかし、既存のある程度大きなプロジェクトに対していきなり導入すると、もし動かなかったときに切り分けが大変です。
+
+また、パッケージが動く最小構成を試しておくことで後から他のプロジェクトで利用するときにも役立ちます。
+パッケージに何か不具合を見つけた場合でも、最小構成を用意しておくことで報告しやすくなります。
+
+この記事を参考にして、パッケージを試すためのplaygroundを作ってみましょう。
+
+
+# 前提
+
+Pythonの環境はpyenv + poetryで構築されているとします。
+[2023年の環境構築記事](/blog/2023/2fcc-9a3e)が参考になるかもしれません。
+
+
+# フォルダ構成
+
+playgroundのフォルダ構成は以下のようになります。
+
+```
+python-hogehoge/
+├── hogehoge_sample/
+│   ├── __init__.py
+│   └── main.py
+├── pyproject.toml
+└── README.md
+```
+
+`hogehoge_sample` ディレクトリを作成し、その中に `main.py` を作成します。
+
+## pyproject.toml
+
+`poetry init` で `pyproject.toml` を作成します。
+
+```
+mkdir python-dataclasses
+poetry init
+```
+
+package-nameは `dataclasses-sample` と答えます。
+ここで `dataclasses` と答えると、本来の `dataclasses` と名前が被るので、避ける必要があります。
+
+以下の `pyproject.toml` が作成されます。
+
+```toml
+[tool.poetry]
+name = "dataclasses-sample"
+version = "0.1.0"
+description = ""
+authors = ["Naoya Yamashita <conao3@gmail.com>"]
+readme = "README.md"
+packages = [{include = "dataclasses_sample"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+```
+
+`packages` の指定は必要ないので、削除します。
+
+```diff
+ [tool.poetry]
+ name = "dataclasses-sample"
+ version = "0.1.0"
+ description = ""
+ authors = ["Naoya Yamashita <conao3@gmail.com>"]
+ readme = "README.md"
+-packages = [{include = "dataclasses_sample"}]
+ 
+ [tool.poetry.dependencies]
+ python = "^3.11"
+ 
+ [build-system]
+ requires = ["poetry-core"]
+ build-backend = "poetry.core.masonry.api"
+```
+
+## src/dataclasses_sample/main.py
+
+一旦、以下の内容で `main.py` を作成します。
+
+```python
+def main1():
+    print('Hello, world!')
+
+
+if __name__ == '__main__':
+    main1()
+```
+
+
+## Install / 起動確認
+
+さぁ `poetry install` 。。なのですが、 `README.md` がないと怒られるので作っておきます。
+
+```
+touch README.md
+```
+
+`poetry install` でインストールします。
+
+```
+$ poetry install
+Installing the current project: dataclasses-sample (0.1.0)
+```
+
+インストールできたら、 `poetry run` で実行できます。
+`scripts` は指定してないので、直接モジュール指定で起動することになります。
+
+```
+$ poetry run python -m dataclasses_sample.main
+Hello, world!
+```
+
+これで、playgroundの準備は完了です。
+
+
+# パッケージを試す
+
+dataclassesを試してみます。
+[公式ドキュメント](https://docs.python.org/ja/3/library/dataclasses.html)を参考に、以下のように修正します。
+
+```diff
++import dataclasses
+
+
++@dataclasses.dataclass
++class Person:
++    name: str
++    age: int
+
+
+ def main1():
+     print('Hello, world!')
+
+
++def main2():
++    p = Person('John', 30)
++    print(p)
+
+
+ if __name__ == '__main__':
+-    main1()
++    main2()
+```
+
+起動してみるとこのようになります。
+
+```bash
+$ poetry run python -m dataclasses_sample.main
+Person(name='John', age=30)
+```
+
+成功です。これが一番シンプルな `dataclasses.dataclass` の使い方です。
+
+今までの関数を消さずに、新しく追加した関数の中で他のメソッドやクラスなどを記述し、その新しい関数を呼び出すように修正します。
+
+もちろん起動時引数によって起動する関数を変えることもできるのですが、playgroundはこのくらいの気軽さが良いと思います。
+
+
+# git push
+
+遊んだ後はGitHubにpushしておきましょう。
+
+「はじめに」にも書きましたが、ざざっと書いたものというのは結構助けになります。
+
+私はこういうplaygroundを上げる専用の一人orgを作っていて、そこにpushしています。
+今回は [conao3-playground/python-dataclasses](https://github.com/conao3-playground/python-dataclasses) にpushしました。
+
+
+# まとめ
+
+私が最近試しているplaygroundというやり方を紹介しました。
+
+さくっと書いてさくっと動くのがPythonの良いところなので、その良さを活かしていきたいですね。
