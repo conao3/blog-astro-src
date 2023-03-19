@@ -1,0 +1,167 @@
+---
+title: 'Pydantic: 基本的な使用方法'
+pubDate: 2023-03-20
+---
+
+# はじめに
+
+[Pydantic](https://docs.pydantic.dev/)は私が一番好きなPythonのパッケージです。
+イメージとしては、builtinの [dataclasses](https://docs.python.org/ja/3/library/dataclasses.html) に実行時バリデーションを追加したものです。
+
+「型は飾り」のPythonにおいて、実行時においても型に守られるのはとても嬉しいです。
+データの型変換とバリデーションが同時に行われる他、デフォルト値の補完もpydanticに任せることができます。
+そのため外界とのインターフェイスにpydanticを置くことで、安心してデータを扱うことができます。
+
+現在は [FastAPI](https://fastapi.tiangolo.com/ja/) や [Strawberry](https://strawberry.rocks/) などと統合され、人気パッケージとなっています。
+
+サンプルコードは [conao3-playground/python-pydantic-blog](https://github.com/conao3-playground/python-pydantic-blog) にあります。
+
+
+# 基本的な使用方法
+
+## モデルの定義
+
+まずは基本的なモデルの定義から見ていきます。
+
+`pydantic.BaseModel` を継承してモデルを定義します。
+
+```python
+class User(pydantic.BaseModel):
+    user_cd: str
+    name: str
+    age: int = 20
+```
+
+初期値を与えることで、デフォルト値を設定することができます。
+初期値がないフィールドは必須フィールドとなります。
+
+```python
+user1 = User(user_cd='u_001', name='Alice')
+user2 = User(user_cd='u_002', name='Bob', age=30)
+
+print(user1)
+print(user2)
+```
+
+```
+user_cd='u_001' name='Alice' age=20
+user_cd='u_002' name='Bob' age=30
+```
+
+`pydantic.BaseModel` を継承することで、キーワードでの初期化が可能になり、print関数の出力も見やすいフォーマッタが用意されます。
+
+
+## pydanticオブジェクトの生成
+
+`pydantic.BaseModel` を継承したモデルのインスタンスを便宜上「pydanticオブジェクト」と呼ぶことにします。
+
+pydanticオブジェクトは複数の方法で生成することができます。
+
+### キーワード引数での初期化
+
+基本の使い方で見た通り、キーワード引数で初期化することができます。
+
+```python
+user1 = User(user_cd='u_001', name='Alice')
+print(user1)
+```
+
+```
+user_cd='u_001' name='Alice' age=20
+```
+
+### dictからの初期化
+
+dictを持っている場合、そのdictからpydanticオブジェクトを生成することができます。
+
+```python
+user1_dct = {'user_cd': 'u_001', 'name': 'Alice'}
+user1 = User.parse_obj(user1_dct)
+print(user1)
+```
+
+また、dictは `**` 演算子でキーワード引数に展開できるため、以下のようにも書くことができます。
+
+```python
+user1_dct = {'user_cd': 'u_001', 'name': 'Alice'}
+user1 = User(**user1_dct)
+print(user1)
+```
+
+`parse_obj(obj: Any)` は引数を `dict(args: Iterable)` で変換してから `**` 演算子で展開しています。
+そのため、実際にはdict以外のオブジェクトを渡すこともできます。
+
+```python
+user1_data = [('user_cd', 'u_001'), ('name', 'Alice')]
+user1 = User.parse_obj(user1_data)
+print(user1)
+```
+
+
+### JSONからの初期化
+
+JSON文字列を持っている場合、そのJSON文字列からpydanticオブジェクトを生成することができます。
+
+```python
+user1_json = '{"user_cd": "u_001", "name": "Alice"}'
+user1 = User.parse_raw(user1_json)
+print(user1)
+```
+
+
+## pydanticオブジェクトから取り出し
+
+### フィールド名での取り出し
+
+pydanticオブジェクトからフィールド名で取り出すことができます。
+
+```python
+user1 = User(user_cd='u_001', name='Alice')
+print(user1.user_cd)
+print(user1.name)
+print(user1.age)
+```
+
+```
+u_001
+Alice
+20
+```
+
+
+### dictへの変換
+
+pydanticオブジェクトは `dict()` 関数でdictに変換することができます。
+
+```python
+user1 = User(user_cd='u_001', name='Alice')
+print(type(user1.dict()))
+print(user1.dict())
+```
+
+```
+<class 'dict'>
+{'user_cd': 'u_001', 'name': 'Alice', 'age': 20}
+```
+
+
+### jsonへの変換
+
+pydanticオブジェクトは `json()` 関数でjsonに変換することができます。
+
+```python
+user1 = User(user_cd='u_001', name='Alice')
+print(type(user1.json()))
+print(user1.json())
+```
+
+```
+<class 'str'>
+{"user_cd": "u_001", "name": "Alice", "age": 20}
+```
+
+
+# まとめ
+
+この記事はほとんど `dataclasses` と同じことをしているだけになってしまいましたが、
+次回はバリデーションの話をします。
