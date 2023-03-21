@@ -103,7 +103,10 @@ pnpm run dev
 
 # ビルドコマンドの設定
 
-「[Add PNPM to Pre-installed Cloudflare Pages tools](https://community.cloudflare.com/t/add-pnpm-to-pre-installed-cloudflare-pages-tools/288514/4)」を参考に、ビルドコマンドを `npm run build` から `npm install -g pnpm && pnpm install && pnpm run build` に変更します。
+「[Add PNPM to Pre-installed Cloudflare Pages tools](https://community.cloudflare.com/t/add-pnpm-to-pre-installed-cloudflare-pages-tools/288514/4)」
+を参考に、ビルドコマンドを `npm run build` から `npm install -g pnpm && pnpm install && pnpm run build` に変更します。
+
+さらに、デフォルトで `npm install` が実行されるので、 `NPM_FLAGS` を `--version` に設定しておくことで、無害なコマンドが実行されるように変更しておきます。
 
 
 # えいや
