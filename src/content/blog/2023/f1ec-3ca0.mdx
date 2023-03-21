@@ -1,0 +1,117 @@
+---
+title: 'yarnからpnpmに移行してみる'
+pubDate: 2023-03-22
+---
+
+# はじめに
+
+[Hello Astro](/2023/4c9a-6f93)で厨二なのでnpmではなくyarnを使うという話をしましたが、
+巷でpnpmが話題になってるので、素振りも兼ねてpnpmに移行してみました。
+
+
+# なぜpnpmを使うのか
+
+雰囲気でyarnを使っていたので全く気付いてなかったのですが、yarnはv1, v2, v3がそれぞれ生きている状況らしく、
+どうやらv2で独自路線に振りすぎたのをv3で揺り戻した？みたいになっているらしく、
+そもそも私も今使っているyarnのバージョンが良く分からない。。
+結局使っていたのはv1だったのですが、もうこの時点で面倒くさいことになっている。
+詳細は 「[yarn v3 の独自機能を避けつつ yarn v1 から v3 へのアップグレードをする - Zenn](https://zenn.dev/mizchi/articles/yarn-v1-to-v3)」などを参考。
+
+pnpmは彗星の如く現れたよさげなパッケージマネージャなのですが、これも詳細は 「[pnpm の特徴 - Zenn](https://zenn.dev/azukiazusa/articles/pnpm-feature)」などを見てもらうとして、
+個人的に気に入ってるのは「厳格なパッケージ管理」のところです。
+
+簡単に言うとAがBに依存してるとき、npmやyarnの場合node_module内でAとBが同じ階層に配置されるので、Bもまたinclude可能になるのですが、
+AがBに依存しなくなったとき、Bをincludeしてたら死ぬよねということです。
+Bをincludeしたかったらpackage.jsonに依存を書きなさいと。なるほど。良さそうですね。
+
+
+# インストール
+
+pnpmのインストールは悩んだのですが、yayでインストールできたのでこれを使うことにしました。
+
+```bash
+yay -S pnpm
+```
+
+
+# 移行
+
+以下の記事を参考にしつつ移行します。
+
+- [How to migrate from yarn / npm to pnpm - Dev.](https://dev.to/andreychernykh/yarn-npm-to-pnpm-migration-guide-2n04)
+- [yarnからpnpmに移行した時の話 - Zenn](https://zenn.dev/mihorin1729/articles/8f4a966b01f93e)
+
+
+## node_modules削除
+
+とりあえず `node_modules` を削除します。
+
+```bash
+rm -rf node_modules
+```
+
+
+## package.json編集
+
+preinstall scriptsを追加します。
+
+```diff
+ {
+   "scripts": {
++    "preinstall": "npx only-allow pnpm",
+     "dev": "next dev",
+     "build": "next build",
+     "start": "next start",
+     "lint": "next lint",
+     "format": "prettier --write .",
+     "type-check": "tsc --noEmit"
+ },
+```
+
+
+## pnpm import / install
+
+`pnpm import` で `yarn.lock` から `pnpm-lock.yaml` を生成します。
+
+```bash
+pnpm import
+```
+
+`yarn.lock` を削除します。
+
+```bash
+rm -rf yarn.lock
+```
+
+`pnpm install` で `pnpm-lock.yaml` を元に `node_modules` にインストールします
+
+```bash
+pnpm install
+```
+
+
+## ローカルサーバー起動
+
+インストールできたので、 `pnpm run dev` でローカルサーバーを起動してみます。
+
+```bash
+pnpm run dev
+```
+
+問題なく動きました。
+
+
+# ビルドコマンドの設定
+
+「[Add PNPM to Pre-installed Cloudflare Pages tools](https://community.cloudflare.com/t/add-pnpm-to-pre-installed-cloudflare-pages-tools/288514/4)」を参考に、ビルドコマンドを `npm run build` から `npm install -g pnpm && pnpm install && pnpm run build` に変更します。
+
+
+# えいや
+
+えいやでpushします。この記事が公開されてれば成功です。
+
+
+# まとめ
+
+特に躓くこともなく移行できました。 `pnpm install` が爆速なのはやっぱり良いですね。
+プロダクションで使うにはまだちょっとエッジ感がありますが、今のところは良さそうです。
