@@ -1,0 +1,74 @@
+---
+title: 'AstroでReact Flowを使いたいぞという話'
+pubDate: 2023-03-23
+---
+
+# はじめに
+
+[React Flow](https://reactflow.dev/)に一目惚れしたので、このブログでも使ってみたい。
+[Hello Astro](/blog/2023/4c9a-6f93/)で素のReactが動くことは確かめたのだけど、このクラスのライブラリが動くかどうかは分からないので、ちょっとチャレンジングな課題。
+
+
+# pnpm install
+
+まずは、React Flowをインストールする。
+
+```bash
+pnpm install reactflow
+```
+
+ローカルサーバーを起動してみる。
+
+```bash
+pnpm run dev
+```
+
+普通に立ち上がってきた。インストールしただけで壊れるということはなかったようです。
+
+
+# mdxで使ってみる
+
+[Creating your first flow](https://reactflow.dev/docs/quickstart/#creating-your-first-flow)の例をやってみる。
+
+```jsx
+import ReactFlow from 'reactflow';
+
+import 'reactflow/dist/style.css';
+
+const initialNodes = [
+  { id: '1', position: { x: 10, y: 10 }, data: { label: '1' } },
+  { id: '2', position: { x: 10, y: 100 }, data: { label: '2' } },
+];
+const initialEdges = [{ id: 'e1-2', source: '1', target: '2' }];
+
+export default function App() {
+  return (
+    <div style={{ border: '1px solid', width: '100%', height: '500px' }}>
+      <ReactFlow nodes={initialNodes} edges={initialEdges} />
+    </div>
+  );
+}
+```
+
+これを `src/components/SimpleReactflow.tsx` で保存して、以下のようにmdxに埋め込む。
+
+```mdx
+import App from '../../../components/SimpleReactflow.tsx'
+
+<App client:load />
+```
+
+import App from '../../../components/SimpleReactflow.tsx'
+
+<App client:load />
+
+。。。普通に動いてしまった。。なんだこれ、Astro最高だな。
+
+
+# まとめ
+
+予想外にさくっと動いてしまったのでびっくりしてしまいました。
+
+たしかにhugoよりもページ生成速度は少し遅いですが、十分速いですし、出来上がったページはhugoと遜色ないです。(ゼロjsなので)
+
+それでいてこんな感じにReactが普通に動くのは夢が広がります。みなさんも試してみてください。
