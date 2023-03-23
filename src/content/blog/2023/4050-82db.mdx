@@ -1,6 +1,6 @@
 ---
 title: 'AstroでReact Flowを使いたいぞという話'
-pubDate: 2023-03-23
+pubDate: 2023-03-24 00:25
 ---
 
 # はじめに
@@ -55,14 +55,17 @@ export default function App() {
 ```mdx
 import App from '../../../components/SimpleReactflow.tsx'
 
-<App client:load />
+<App client:only />
 ```
 
 import App from '../../../components/SimpleReactflow.tsx'
 
-<App client:load />
+<App client:only />
 
 。。。普通に動いてしまった。。なんだこれ、Astro最高だな。
+
+とはいえ実は一回失敗していた。 `cliend:load` を指定するとビルド時にAstroが落ちてしまった。
+SSRに対応してないのかな？ということで `client:only` を指定してgot事無き。
 
 
 # まとめ
