@@ -1,0 +1,138 @@
+---
+title: 'AstroでKaTeXを使いたいぞという話'
+pubDate: '2023-03-25 05:11'
+---
+
+# はじめに
+
+Webで数式組版をしたい場合、MathJaxを使うというのが常識でしたが、前回のhugoブログを作った時点でKaTeXの方が早くて良いぞという話になっていました。
+今回のAstroブログでもどうにか数式を表示したいということで、さくっと調べてみたのですが、あまり情勢は変わってないようだったので、KaTeXを導入することにします。
+
+
+# Remark / Rehype
+
+AstroはMarkdownをHTMLにレンダリングする際、Remark/Rehypeを利用しているようです。(ref: [MarkdownとMDXの設定](https://docs.astro.build/ja/guides/markdown-content/#markdown%E3%81%A8mdx%E3%81%AE%E8%A8%AD%E5%AE%9A))
+
+Remark/Rehypeの関係は掴み辛いですが、「[Introduction to unified](https://unifiedjs.com/learn/guide/introduction-to-unified/)」や「[Remark で広げる Markdown の世界](https://vivliostyle.github.io/vivliostyle_doc/ja/vivliostyle-user-group-vol2/spring-raining/index.html)」が分かりやすかったので紹介します。
+
+こんな感じの理解をしてます。
+- `unist` というASTがあり、それの特化として `mdast` や `hast` 、`nlcst` (なぜ `tast` にしなかった。。) がある。
+- `*-parse` で `unist` に変換する。
+- `*-stringify` で `unist` をそのフォーマットの文字列に変換する。
+
+さらに
+- `unist` から `unist` に変換する `transform` を挟むことができ、ここにプラグインを刺す
+- `unist` 同士の変換を `remark-rehype` や `rehype-remark` で行う
+
+![](/blob/2023/5cb9fde7-5834-4f66-b254-c1a6a2f78fac.png)
+
+この一連の流れが `unified` エコシステムで整理されています。
+うーん。きれいですね。すばらしい。
+
+
+# remark-math / rehype-katexの導入
+
+[remark-math](https://unifiedjs.com/explore/package/remark-math/)と[rehype-katex](https://unifiedjs.com/explore/package/rehype-katex/)を導入します。
+
+`remark-math` がマークダウン中の `$C_L$` のような数式をmdast上で変換し、
+`rehype-katex` がhast上でKaTeXを使うように変換します。
+
+Astroでは書き下しませんが、READMEの例が分かりやすかったので引用します。
+
+```ts
+import {read} from 'to-vfile'
+import {unified} from 'unified'
+import remarkParse from 'remark-parse'
+import remarkMath from 'remark-math'
+import remarkRehype from 'remark-rehype'
+import rehypeKatex from 'rehype-katex'
+import rehypeStringify from 'rehype-stringify'
+
+const file = await unified()
+  .use(remarkParse)
+  .use(remarkMath)
+  .use(remarkRehype)
+  .use(rehypeKatex)
+  .use(rehypeStringify)
+  .process(await read('example.md'))
+
+console.log(String(file))
+```
+
+マークダウンの文字列をmdastに変換して、mdastでmathを変換して、hastに変換して、hastでkatexを変換して、htmlに変換しているのが分かります。
+
+
+# Astroでの設定
+
+## astro.config.mjsに追加
+
+Astroから使えるようにするには `astro.config.mjs` に以下のように設定します。
+
+```diff
+ import { defineConfig } from 'astro/config';
+ import mdx from '@astrojs/mdx';
+ import sitemap from '@astrojs/sitemap';
++import remarkMath from 'remark-math';
++import rehypeKatex from 'rehype-katex';
+ 
+ import react from "@astrojs/react";
+ 
+ export default defineConfig({
+   site: 'https://a.conao3.com',
+   integrations: [mdx(), sitemap(), react()],
++  markdown: {
++    remarkPlugins: [remarkMath],
++    rehypePlugins: [rehypeKatex],
++  }
+ });
+```
+
+
+## CSSの追加
+
+[KaTeXのページ](https://katex.org/docs/browser.html)からCSSのタグをコピーして良い感じのところに貼り付けます。
+私はいろいろ面倒だったので、 `src/component/BaseHeader.astro` に貼り付けて全ページで読み込まれるようにしました。
+
+```html
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" integrity="sha384-vKruj+a13U8yHIkAyGgK1J3ArTLzrFGBbBc0tDp4ad/EyewESeXE/Iv67Aj8gKZ0" crossorigin="anonymous">
+```
+
+
+# 動作確認
+
+`$C_L$` は $C_L$ のようにレンダリングされます。
+
+ブロックスタイルはこんな感じ。
+
+```md
+$$
+\frac{1}{\pi} = \frac{2\sqrt{2}}{99^2}
+                \sum_{n=0}^\infty
+                \frac{(4n)!}{(4^n n!)^4}
+                \frac{1103 + 26390n}{99^{4n}}
+$$
+```
+
+$$
+\frac{1}{\pi} = \frac{2\sqrt{2}}{99^2}
+                \sum_{n=0}^\infty
+                \frac{(4n)!}{(4^n n!)^4}
+                \frac{1103 + 26390n}{99^{4n}}
+$$
+
+ちゃんと動いてそう。すばら。
+
+
+# まとめ
+
+想像以上に簡単にできた。remark/rehypeというプロジェクトを知れたのも良かった。どんどん使っていきたい。
+
+記事ごとレイアウトを指定すると良いという記事もあったが、多分それは記事のタイトルとか記事の抜粋で
+別のページに出たときに壊れる気がするので、今回は全ページで読み込むようにした。
+
+rehype-katexが $\KaTeX$ にレンダリングしているので、おそらくその時だけCSSを追加するようにできると最適化されて良さそう。
+
+
+# 参考
+
+- [Render Math in Astro Markdown Pages with KaTeX](https://ileumas.com/writing/2022/03/astro-math-katex/)
