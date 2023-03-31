@@ -14,13 +14,13 @@ pubDate: 2023-03-31 23:21
 最短でpostgresを立ち上げたい場合、直接dockerで上げてしまう。
 
 ```bash
-docker run --rm -it -e POSTGRES_PASSWORD=password -p 5432:5432 postgres
+docker run --rm -it -e POSTGRES_PASSWORD=password -p 15432:5432 postgres
 ```
 
 以下の情報で接続できる。
 
 - host: `localhost`
-- port: `5432`
+- port: `15432`
 - db_name: `postgres`
 - user: `postgres`
 - password: `password`
@@ -60,7 +60,7 @@ services:
 最後に `.env` に以下内容を用意しておく。
 
 ```
-DB_PORT=5432
+DB_PORT=15432
 DB_NAME=postgres
 DB_USER=postgres
 DB_PASSWORD=password
