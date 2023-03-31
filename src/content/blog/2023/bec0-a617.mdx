@@ -1,0 +1,75 @@
+---
+title: 'さくっとpostgreSQLを立ち上げたいときのメモ'
+pubDate: 2023-03-31 23:21
+---
+
+# はじめに
+
+今SQLを叩きたいぞというときが稀にある。
+そもそもそういうときはこの「はじめに」すら読み飛ばすので、さっさと方法を書く。
+
+
+# プロジェクトに紐付かない場合 (docker)
+
+最短でpostgresを立ち上げたい場合、直接dockerで上げてしまう。
+
+```bash
+docker run --rm -it -e POSTGRES_PASSWORD=password -p 5432:5432 postgres
+```
+
+以下の情報で接続できる。
+
+- host: `localhost`
+- port: `5432`
+- db_name: `postgres`
+- user: `postgres`
+- password: `password`
+
+
+# プロジェクトに紐付く場合 (docker-compose)
+
+プロジェクトのローカルDB環境としてpostgresを立ち上げたいなら、docker-composeを使ってメンバーと共有した方が良い。
+起動方法もdocker-composeに隠蔽されるので便利。
+
+`docker/postgres/Dockerfile` として以下の内容で保存する。
+
+```docker
+FROM postgres:15
+
+RUN localedef -i ja_JP -c -f UTF-8 -A /usr/share/locale/locale.alias ja_JP.UTF-8
+ENV LANG ja_JP.utf8
+ENV LC_MESSAGES en_US.utf8
+```
+
+`compose.yml` に以下内容で保存する。
+
+```yaml
+services:
+  db:
+    build:
+      context: ./docker/postgres
+    command: log_statement=all
+    ports:
+      - ${DB_PORT}:5432
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+```
+
+最後に `.env` に以下内容を用意しておく。
+
+```
+DB_PORT=5432
+DB_NAME=postgres
+DB_USER=postgres
+DB_PASSWORD=password
+```
+
+で、以下のコマンドで起動する。
+
+```bash
+docker-compose up
+```
+
+postgresもlocaleでソート順が変わるという[罠挙動がある](https://www.postgresql.jp/document/14/html/locale.html)ので、それを確かめたいときなどはDockerfileを書けると便利。
