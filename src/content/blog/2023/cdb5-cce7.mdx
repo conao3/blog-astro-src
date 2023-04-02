@@ -1,0 +1,103 @@
+---
+title: 'オイラーの公式から三角関数の世界を再構築できるか'
+pubDate: 2023-04-01 02:36
+draft: true
+---
+
+# はじめに
+
+三角関数にまつわる公式は数多くあります。
+高校数学ではとりあえず加法定理だけ覚えておいて、他の公式を導くというのをやっていたかと思いますが、
+何もないところから与えるには少し複雑すぎです。
+
+もう少し分かりやすいものから出発して、なおかつ普段の世界を構築できると良いですね。
+ということでオイラーの公式を既知として、三角関数の世界を再構築してみます。
+
+
+# オイラーの公式の導出
+
+既知にするとはいえ、オイラーの公式を導出しておきます。
+いろいろな方法がありますが、今回は私の好きな微分方程式からの導出を紹介します。
+
+まずは以下の微分方程式を考えます。
+
+$$
+\frac{\mathrm{d}^2y}{\mathrm{d}x^2} + y = 0
+$$
+
+この微分方程式の基本解は
+
+$$
+y = \begin{cases}
+      \sin x \\
+      \cos x \\
+    \end{cases}
+$$
+
+であるため、一般解はこの基本解の線形結合により与えられる。
+
+実際、ロンスキアンは0にならない。
+
+$$
+W = \begin{vmatrix}
+      \sin x & \cos x \\
+      \cos x & -\sin x \\
+    \end{vmatrix}
+  = \cos^2 x - \sin^2 x = 1
+$$
+
+一方で、$e^{ix}$ もこの微分方程式の解である。
+
+基本解は $\sin x$ と $\cos x$ であるため、$e^{ix}$ はこれらの関数の線形結合で表される。
+
+$$
+e^{ix} = C_1 \sin x + C_2 \cos x
+$$
+
+この式の微分により
+
+$$
+ie^{ix} = C_1 \cos x - C_2 \sin x
+$$
+
+を得る。それぞれ $x=0$ を代入し、 $C_1 = 0$ と $C_2 = 1$ が分かるので、つまり
+
+$$
+e^{ix} = \cos x + i \sin x
+$$
+
+を得る。これはオイラーの公式である。
+
+
+# 加法定理
+
+高校数学では加法定理から全てを構築していたので、オイラーの公式から加法定理が導ければそれでこの記事の目的は達成とも言えます。
+
+オイラーの公式において $x = \alpha \pm \beta$ を代入すると
+
+$$
+e^{i(\alpha \pm \beta)} = \cos(\alpha + \beta) \pm i \sin(\alpha + \beta)
+$$
+
+一方で指数法則より
+
+$$
+\begin{split} e^{i(\alpha \pm \beta)}
+  &= e^{i\alpha} e^{\pm i\beta}\\
+  &= (\cos \alpha + i \sin \alpha) (\cos \beta \pm i \sin \beta)\\
+  &= (\cos \alpha \cos \beta \mp \sin \alpha \sin \beta) + i (\sin \alpha \cos \beta \pm \cos \alpha \sin \beta)\\
+\end{split}
+$$
+
+なので、実部と虚部を比較して、
+
+$$
+\begin{aligned}
+  \cos(\alpha \pm \beta) &= \cos \alpha \cos \beta \mp \sin \alpha \sin \beta \\
+  \sin(\alpha \pm \beta) &= \sin \alpha \cos \beta \pm \cos \alpha \sin \beta
+\end{aligned}
+$$
+
+これは三角関数の加法定理である。
+
+

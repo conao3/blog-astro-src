@@ -13,5 +13,18 @@ export default defineConfig({
   markdown: {
     remarkPlugins: [remarkMath],
     rehypePlugins: [rehypeKatex],
-  }
+  },
+  vite: {
+    ssr: {
+      noExternal: [
+        'react-aria',
+        'react-stately',
+        'react-spectrum',
+        '@react-stately/*',
+        '@react-aria/*',
+        '@react-spectrum/*',
+        '@react-spectrum/actiongroup',
+      ],
+    },
+  },
 });

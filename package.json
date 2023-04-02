@@ -11,6 +11,7 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@adobe/react-spectrum": "^3.25.1",
     "@astrojs/mdx": "^0.17.2",
     "@astrojs/react": "^2.1.0",
     "@astrojs/rss": "^2.3.1",
