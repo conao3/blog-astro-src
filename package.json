@@ -23,5 +23,10 @@
     "reactflow": "^11.6.1",
     "rehype-katex": "^6.0.2",
     "remark-math": "^5.1.1"
+  },
+  "packageManager": "pnpm@8.6.0",
+  "engines": {
+    "node": ">=18.16.0",
+    "pnpm": ">=8.6.0"
   }
 }
