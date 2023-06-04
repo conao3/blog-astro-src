@@ -1,0 +1,143 @@
+---
+title: 'better shellscriptとしてのdeno'
+pubDate: 2023-06-04
+---
+
+# はじめに
+
+denoで一枚ペラのTypeScriptが動きます。
+better shellscriptとしてのdenoを考えてみます。
+
+# denoのインストール
+
+どこからかdenoをインストールします。
+ArchLinuxならyayでインストールできます。
+
+```sh
+yay -S deno
+```
+
+```sh
+$ deno --version
+deno 1.32.5 (release, x86_64-unknown-linux-gnu)
+v8 11.2.214.9
+typescript 5.0.3
+```
+
+他のディストリの場合は[公式のインストール方法](https://deno.com/manual@v1.34.1/getting_started/installation)を参照。
+
+# TypeScriptインタプリタとしてのdeno
+
+denoを引数なしで起動するとTypeScriptのREPLが起動します。
+
+```sh
+$ deno
+Deno 1.32.5
+exit using ctrl+d, ctrl+c, or close()
+REPL is running with all permissions allowed.
+To specify permissions, run `deno repl` with allow flags.
+> console.log('hello deno')
+hello deno
+undefined
+> function add(a: int, b: int): int { return a+b }
+undefined
+> add(1,2)
+3
+> add("a", 2)
+"a2"
+```
+
+型宣言も書けますが、特に怒ってくれないのであまり意味がないようです。
+
+# denoでTSファイルの実行
+## deno run
+
+`run` サブコマンドでローカルのTSファイルを実行できます。
+
+```typescript
+console.log('Hello, deno!')
+```
+
+```sh
+$ deno run hello.ts
+Hello, deno!
+```
+
+さらにURLを指定することで、TSファイルをダウンロードしてその場で実行できます。
+
+```sh
+$ deno run https://deno.land/std/examples/welcome.ts
+Welcome to Deno!
+```
+
+私のブログでもstaticファイルとして置いています。ファイル一覧は [/static/deno](/static/deno) で確認できます。
+
+```sh
+$ deno run https://a.conao3.com/static/deno/hello-world.v1.ts
+Hello, deno!
+```
+
+## 権限管理
+
+denoはnodeの反省を生かしてスクリプトに対して[与える権限をコントロール](https://deno.com/manual@v1.34.1/basics/permissions)することができます。
+権限を与えないとファイルアクセスやネットワークアクセスができないようになっています。
+
+console.logは権限を与えなくても実行できます。
+
+```typescript
+console.log('Hello, deno!')
+```
+
+```sh
+$ deno run hello.ts
+Hello, deno!
+```
+
+しかし、ファイルアクセスはできません。
+
+```typescript
+const decoder = new TextDecoder("utf-8");
+const data = await Deno.readFile("hello.ts");
+console.log(decoder.decode(data));
+```
+
+実行すると権限を追加で与えるか聞いてきます。
+
+```sh
+$ deno run readfile.ts 
+┌ ⚠️  Deno requests read access to "hello.ts".
+├ Requested by `Deno.readFile()` API.
+├ Run again with --allow-read to bypass this prompt.
+└ Allow? [y/n/A] (y = yes, allow; n = no, deny; A = allow all read permissions) >
+> 
+```
+
+`n` を入力すると拒否でき、 `y` を入力すると許可できます。
+
+```sh
+> n
+┌ ⚠️  Deno requests read access to "hello.ts".
+❌ Denied read access to "hello.ts".
+error: Uncaught PermissionDenied: Requires read access to "hello.ts", run again with the --allow-read flag
+const data = await Deno.readFile("hello.ts");
+             ^
+    at async Object.readFile (ext:deno_fs/30_fs.js:684:18)
+    at async file:///home/conao/dev/tmp/deno/readfile.ts:2:14
+```
+
+```sh
+> y
+┌ ⚠️  Deno requests read access to "hello.ts".
+✅ Granted read access to "hello.ts".
+console.log('Hello, deno!')
+```
+
+便利。
+
+とはいえ、自分のスクリプトの場合 `-A` を与えることにはなりそうです。
+
+# まとめ
+
+いろいろ単発のサンプルスクリプトを書こうと思ったのですが、永遠に公開できなくなりそうなのでここまでにします。
+
+このブログにdenoのスクリプト置くの結構便利そうなので、また何か書けたら書きます。

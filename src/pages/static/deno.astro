@@ -1,0 +1,35 @@
+---
+import BaseHead from "../../components/BaseHead.astro";
+import Header from "../../components/Header.astro";
+import { SITE_TITLE } from "../../consts";
+
+export const files = [
+    {name: "hello-world.v1.ts", description: "stdout sample"},
+];
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <BaseHead title={SITE_TITLE} />
+</head>
+<body>
+    <Header />
+    <main>
+        <ul>
+            {files.map((file) => {
+                const path = `static/deno/${file.name}`;
+                return (
+                    <li>
+                        {file.name}{file?.description && ` - ${file.description}`}
+                        <a href={`/${path}`}>[view file]</a>
+                        <a href="javascript:void(0)" onclick={`navigator.clipboard.writeText('${Astro.url.origin}/${path}')`}>[copy uri]</a>
+                        <a href="javascript:void(0)" onclick={`navigator.clipboard.writeText('deno run -A ${Astro.url.origin}/${path}')`}>[copy deno command]</a>
+                    </li>
+                )
+            })}
+        </ul>
+    </main>
+</body>
+</html>

@@ -1,0 +1,21 @@
+---
+import BaseHead from "../../components/BaseHead.astro";
+import Header from "../../components/Header.astro";
+import { SITE_TITLE } from "../../consts";
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <BaseHead title={SITE_TITLE} />
+</head>
+<body>
+    <Header />
+    <main>
+        <ul>
+            <li><a href="/static/deno">deno</a></li>
+        </ul>
+    </main>
+</body>
+</html>
