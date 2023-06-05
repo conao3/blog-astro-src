@@ -46,7 +46,7 @@ async function main() {
   }
 
   try {
-    const {data, errors} = await fetch(endpoint_url, {
+    const res = await fetch(endpoint_url, {
       method: "POST",
       headers,
       body: JSON.stringify({
@@ -54,15 +54,15 @@ async function main() {
       }),
     }).then((response) => response.json());
 
-    if (errors) {
-      console.error(`Error: ${JSON.stringify(errors, null, 2)}`);
+    if (res.errors) {
+      console.error(`Error: ${JSON.stringify(res.errors, null, 2)}`);
       Deno.exit(1);
     }
 
     if (args.json) {
-      console.log(JSON.stringify(data, null, 2));
+      console.log(JSON.stringify(res, null, 2));
     } else {
-      const schema = graphql.buildClientSchema(data);
+      const schema = graphql.buildClientSchema(res);
       console.log(graphql.printSchema(schema));
     }
   } catch (error) {
