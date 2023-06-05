@@ -1,0 +1,291 @@
+---
+title: 'Apollo Clientことはじめ'
+pubDate: 2023-06-04
+---
+
+# はじめに
+
+GraphQLクライアントのApollo Clientを使ってみたので、そのメモです。
+
+# 環境構築
+
+以下の記事を参考に進めます。
+- Nextまわり: [](https://eh-career.com/engineerhub/entry/2023/04/18/093000)
+- Apollo Client: [Get started with Apollo Client](https://www.apollographql.com/docs/react/get-started)
+
+## Create Next app
+
+```bash
+$ pnpm create next-app react-apollo-client
+.../share/pnpm/store/v3/tmp/dlx-3829487  |   +1 +
+Packages are hard linked from the content-addressable store to the virtual store.
+  Content-addressable store is at: /home/conao/.local/share/pnpm/store/v3
+  Virtual store is at:             ../../../.local/share/pnpm/store/v3/tmp/dlx-3829487/node_modules/.pnpm
+.../share/pnpm/store/v3/tmp/dlx-3829487  | Progress: resolved 1, reused 1, downloaded 0, added 1, done
+✔ Would you like to use TypeScript with this project? … No / Yes: Yes
+✔ Would you like to use ESLint with this project? … No / Yes: Yes
+✔ Would you like to use Tailwind CSS with this project? … No / Yes: Yes
+✔ Would you like to use `src/` directory with this project? … No / Yes: Yes
+✔ Use App Router (recommended)? … No / Yes: Yes
+✔ Would you like to customize the default import alias? … No / Yes: Yes
+✔ What import alias would you like configured? … @/*
+Creating a new Next.js app in /home/conao/dev/tmp/git/react-apollo-client.
+```
+
+`pnpm run dev` でローカルサーバーが起動します。
+
+```bash
+$ cd react-apollo-client
+$ pnpm run dev
+```
+
+## 不要ファイルの削除
+
+publicの画像や不要な設定を削除します。
+
+```
+5 files changed, 5 insertions(+), 141 deletions(-)
+public/next.svg     |   1 -
+public/vercel.svg   |   1 -
+src/app/globals.css |  24 -----------
+src/app/page.tsx    | 112 ++--------------------------------------------------
+tailwind.config.js  |   8 +---
+```
+
+## Apollo Clientのインストール
+
+Apollo Clientをインストールします。
+
+```bash
+$ pnpm add @apollo/client graphql
+```
+
+単純な読み込みで動作確認します。
+
+```ts
+import { ApolloClient, InMemoryCache, ApolloProvider, gql } from '@apollo/client';
+
+const client = new ApolloClient({
+  uri: 'https://spacex-production.up.railway.app/',
+  cache: new InMemoryCache(),
+});
+
+client
+  .query({
+    query: gql`
+    {
+      launchesPast(limit: 10) {
+        mission_name
+        launch_date_local
+        launch_site {
+          site_name_long
+        }
+        links {
+          article_link
+          video_link
+        }
+        rocket {
+          rocket_name
+        }
+      }
+    }
+    `,
+  })
+  .then((result) => console.log(result));
+```
+
+`page.tsx` に書いた場合はサーバーで実行されるので、ターミナルに結果が表示されます。
+
+```bash
+- event compiled client and server successfully in 280 ms (685 modules)
+{
+  data: {
+    launchesPast: [
+      [Object], [Object],
+      [Object], [Object],
+      [Object], [Object],
+      [Object], [Object],
+      [Object], [Object]
+    ]
+  },
+  loading: false,
+  networkStatus: 7
+}
+```
+
+## useQueryの利用
+
+Reactのコンポーネントで利用するために、`useQuery` を利用します。
+適当なところで `ApolloProvider` でラップすることで、その下のコンポーネントで利用できます。
+
+ブラウザのNetworkでリクエストが見たいのでクライアント側からリクエストを送るようにします。
+page.tsxの先頭に `'use client'` を追加します。
+
+```tsx
+'use client';
+
+import { ApolloClient, InMemoryCache, ApolloProvider, gql } from '@apollo/client';
+import { LaunchesList } from './components/LaunchesList';
+
+const client = new ApolloClient({
+  uri: 'https://spacex-production.up.railway.app/',
+  cache: new InMemoryCache(),
+});
+
+export default function Page() {
+  return (
+    <ApolloProvider client={client}>
+      <main>
+        <div>
+          <p className="font-bold underline">Hello, world!</p>
+        </div>
+        <LaunchesList />
+      </main>
+    </ApolloProvider>
+  )
+}
+```
+
+```tsx
+'use client';
+
+import { useQuery, gql } from '@apollo/client';
+
+const LAUNCHES_LIST = gql`
+  {
+    launchesPast(limit: 10) {
+      id
+      mission_name
+      launch_date_local
+      launch_site {
+        site_name_long
+      }
+      links {
+        article_link
+        video_link
+      }
+      rocket {
+        rocket_name
+      }
+    }
+  }
+  `;
+
+export function LaunchesList() {
+  const { loading, error, data } = useQuery(LAUNCHES_LIST);
+
+  if (loading) return <div>loading...</div>
+  if (error) return <div>Error: {error.message}</div>
+
+  return (
+    <ul>
+      {data.launchesPast.map((launch: any) => (
+        <li key={launch.id}>{launch.mission_name}</li>
+      ))}
+    </ul>
+  )
+}
+```
+
+## TypeScript統合
+
+[TypeScript with Apollo Client](https://www.apollographql.com/docs/react/development-testing/static-typing) を参考にTypeScriptと統合します。
+
+```bash
+$ pnpm add -D typescript @graphql-codegen/cli @graphql-codegen/client-preset
+```
+
+また、私が生成したときは `@graphql-typed-document-node/core` に依存したコードが生成されたので、それもインストールしておきます。
+
+```bash
+$ pnpm add -D @graphql-typed-document-node/core
+```
+
+codegen.tsを以下の内容で作成します。URLのところは対象のEndpointに変更が必要です。
+
+```ts
+import { CodegenConfig } from '@graphql-codegen/cli';
+
+const config: CodegenConfig = {
+  schema: '<URL_OF_YOUR_GRAPHQL_API>',
+  documents: ['src/**/*.tsx'],
+  generates: {
+    './src/__generated__/': {
+      preset: 'client',
+      plugins: [],
+      presetConfig: {
+        gqlTagName: 'gql',
+      }
+    }
+  },
+  ignoreNoDocuments: true,
+};
+
+export default config;
+````
+
+package.jsonにジョブを追加します。
+
+```json
+  "scripts": {
+    "gen": "graphql-codegen"
+  },
+```
+
+実行します。
+
+```bash
+$ pnpm run gen
+
+> react-apollo-client@0.1.0 gen /home/conao/dev/tmp/git/react-apollo-client
+> graphql-codegen
+
+✔ Parse Configuration
+✔ Generate outputs
+```
+
+そうすると `__generated__` ファルダが生成されます。
+
+`__generated__` の `gql` を使うことで型が付きます。便利。
+
+```tsx
+'use client';
+
+import { useQuery } from '@apollo/client';
+import { gql } from '../../__generated__/gql';
+
+const LAUNCHES_LIST = gql(/* GraphQL */`
+  query LaunchList {
+    launchesPast(limit: 10) {
+      id
+      mission_name
+      launch_date_local
+      launch_site {
+        site_name_long
+      }
+      links {
+        article_link
+        video_link
+      }
+      rocket {
+        rocket_name
+      }
+    }
+  }
+`);
+
+export function LaunchesList() {
+  const { loading, error, data } = useQuery(LAUNCHES_LIST);
+
+  if (loading) return <div>loading...</div>
+  if (error) return <div>Error: {error.message}</div>
+
+  return (
+    <ul>
+      {data?.launchesPast?.map((launch) => (
+        <li key={launch?.id}>{launch?.mission_name}</li>
+      ))}
+    </ul>
+  )
+}
+```
