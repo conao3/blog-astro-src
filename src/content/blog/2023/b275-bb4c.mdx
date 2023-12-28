@@ -1,0 +1,367 @@
+---
+title: 'leafのつくりかた'
+pubDate: '2023-12-28'
+---
+
+# はじめに
+
+これはEmacsアドベントカレンダーの15日目の記事です。空いていたのでしゅっと放り込んでおきます。
+
+あまり最新情報を追いかけられてないので、[leaf](https://github.com/conao3/leaf.el)を作ったときのノウハウを共有します。
+
+leafがどのように作られているのかを参考に、マクロに親しみを持ってもらえれば幸いです。
+
+
+# 目標設定
+
+leafの全ての機能を実装することはこの記事では難しいので、leafのサブセットを考えることにします。 leafのサブセット `config` は以下のように動作します。
+
+```lisp
+(ppp-macroexpand
+ (config test
+   :config (setq test-config 1)
+   :preface (setq test-preface 1)
+   :when (executable-find "rg")
+   :require t))
+;;=> (prog1 'test
+;;     (setq test-preface 1)
+;;     (when (executable-find "rg")
+;;       (require 'test)
+;;       (setq test-config 1)))
+```
+
+
+# マクロとは
+
+disclaimer: ドキュメント等は参照せずに私の理解で勝手に書きます。
+
+configはマクロです。マクロについて恐怖心がある方もいるかもしれないので少し私なりに解説します。
+
+普通の関数は「計算結果」を返しますが、マクロは「計算すべきS式」を返し、その後ランタイムによって実行されるものです。
+
+引数を加算する例を実装してみます。 まずは関数です。applyが難しいかもしれないですが、エスパーで読めると思います。
+
+```lisp
+(defun add-fn (&rest args)
+  (apply #'+ args))
+;;=> add-fn
+
+(add-fn 1 2 3)
+;;=> 6
+```
+
+この機能をマクロで実装してみましょう。 マクロは「計算すべきS式」を返すため、その設計をする必要があります。
+
+```lisp
+(add-macro-fn 1 2 3)
+;;=> (+ 1 2 3)
+
+(add-macro-fn 42)
+;;=> (+ 42)
+```
+
+この結果を返す関数を実装できますでしょうか。
+
+このように構造を作る関数には `` `(backquote) `` が便利です。 クオートに似ていますが、指示したところだけを評価することができます。
+
+今回の関数はこのように実装できます。
+
+```lisp
+(defun add-macro-fn (&rest args)
+  `(+ ,@args))
+;;=> add-macro-fn
+
+(add-macro-fn 1 2 3)
+;;=> (+ 1 2 3)
+
+(add-macro-fn 42)
+;;=> (+ 42)
+```
+
+ここまでできれば `defun` を `defmacro` に変更するだけでマクロとして動作します。 マクロが返したS式が実行されるため、計算結果が返却されます。
+
+```lisp
+(defmacro add-macro (&rest args)
+  `(+ ,@args))
+;;=> add-macro
+
+(add-macro 1 2 3)
+;;=> 6
+
+(add-macro 42)
+;;=> 42
+```
+
+マクロとして宣言されたまま展開後のS式を確認する方法はあるのでしょうか。 あります。 `macroexpand` です。 ただ、標準の `macroexpand` は指定するマクロをクオートする必要があったり、展開後のS式がフォーマットされず、見辛いので、 [ppp](<https://github.com/conao3/ppp.el>) をおすすめします。
+
+```lisp
+(ppp-macroexpand (add-macro 1 2 3))
+;;=> (+ 1 2 3)
+```
+
+他には [macrostep](<http://emacs.rubikitch.com/macrostep/>) も便利です。 これを使う場合、scratchバッファで評価するのではなく、キーバインドで展開できます。
+
+さらに、少々詰め込みすぎですが、マクロの中身は普通の関数なので、マクロの実装には関数やマクロを使うことができます。 となると `add-macro` の実装として `add-macro-fn` を使うことができます。
+
+```lisp
+(defmacro add-macro (&rest args)
+  (apply #'add-macro-fn args))
+;;=> add-macro
+
+(add-macro 1 2 3)
+;;=> 6
+```
+
+マクロについて少しでもイメージが掴めたでしょうか。
+
+
+# キーワード変換基盤の実装
+
+configはuse-packageやleafのようなキーワードとその引数を受け取るようなインターフェイスを持っています。 キーワードを簡単に追加できるように変換する基盤を実装しましょう。
+
+configの引数は簡単のために完全なplistになっています。 そのため引数の扱いは素直にできます。
+
+今回はuse-package方式を採用し、対応する関数を動的にディスパッチするようにします。
+
+最初の一歩の例としてはこのようになります。
+
+```lisp
+(defun config-normalizer/:require (name key val rest body)
+  val)
+
+(defun config-handler/:require (name key val rest body)
+  `(,key ,val ,@body))
+
+(defun config-process-keywords (name plist raw)
+  (when plist
+    (let* ((key (pop plist))
+           (val (pop plist))
+           (normalizer-fn (intern (format "config-normalizer/%s" key)))
+           (handler-fn (intern (format "config-handler/%s" key)))
+           body)
+      (setq val (funcall normalizer-fn name key val plist body))
+      (setq body (config-process-keywords name plist raw))
+      (funcall handler-fn name key val plist body))))
+
+(defmacro config (name &rest args)
+  (declare (indent defun))
+  `(prog1 ',name
+     ,@(config-process-keywords name args args)))
+```
+
+現状、このように動きます。
+
+```lisp
+(ppp-macroexpand
+ (config test
+   :require t))
+;;=> (prog1 'test
+;;     (:require t))
+```
+
+`prog1` を使い、キーワードに依存して `config` の返り値がころころ変わらないようにしています。
+
+`intern` して `funcall` するのはメソッド動的ディスパッチのイディオムです。
+
+簡単実装なのでキーワードのソートなどはしていません。そのためキーワードの順番によっては正しく動作しない可能性があります。
+
+しかしこれができれば `config` の心臓部は完成です。あとはキーワードを追加していくだけです。
+
+
+# :requireキーワードの実装
+
+`:require` はboolを受け取って `require` 式を生成するキーワードです。 そのためnormalizerとhandlerはこのようになります。
+
+```lisp
+(defun config-normalizer/:require (name key val rest body)
+  val)
+
+(defun config-handler/:require (name key val rest body)
+ `(,@(when val `((require ',name))) ,@body))
+```
+
+実行してみましょう。
+
+```lisp
+(ppp-macroexpand
+ (config test
+   :require t))
+;;=> (prog1 'test
+;;     (require 'test))
+
+(ppp-macroexpand
+ (config test
+   :require nil))
+;;=> (prog1 'test)
+```
+
+正しく動作しているようです。
+
+
+# :whenキーワードの実装
+
+`:when` キーワードは `when` 式で囲うキーワードです。 そのためnormalizerとhandlerはこのようになります。
+
+normalizerは現時点で `:require` と同じなので `defalias` で実装を省略します。 (これはまさにuse-packageの実装です。 `:require` のnormalizerを変えたら `:when` が壊れるじゃないかって？まあ、そうですね。。)
+
+```lisp
+(defalias 'config-normalizer/:when 'config-normalizer/:require)
+
+(defun config-handler/:when (name key val rest body)
+ `((when ,val ,@body)))
+```
+
+実行してみましょう。
+
+```lisp
+(ppp-macroexpand
+ (config test
+   :when t
+   :require t))
+;;=> (prog1 'test
+;;     (when t
+;;       (require 'test)))
+
+(ppp-macroexpand
+ (config test
+   :when (executable-find "rg")
+   :require t))
+;;=> (prog1 'test
+;;     (when (executable-find "rg")
+;;       (require 'test)))
+```
+
+
+# :preface, :configキーワードの実装
+
+`:preface` と `:config` キーワードは引数をそのまま展開するキーワードです。 展開場所だけが異なり、 `:preface` は `:when` の前に展開され、条件に関係なく実行されます。
+
+```lisp
+(defalias 'config-normalizer/:preface 'config-normalizer/:require)
+(defalias 'config-normalizer/:config 'config-normalizer/:require)
+
+(defun config-handler/:preface (name key val rest body)
+ `(,val ,@body))
+
+(defun config-handler/:config (name key val rest body)
+ `(,val ,@body))
+```
+
+実行してみましょう。
+
+```lisp
+(ppp-macroexpand
+ (config test
+   :preface (setq test-preface 1)
+   :when (executable-find "rg")
+   :require t
+   :config (setq test-config 1)))
+;;=> (prog1 'test
+;;     (setq test-preface 1)
+;;     (when (executable-find "rg")
+;;       (require 'test)
+;;       (setq test-config 1)))
+```
+
+`config` は引数としてplistを仮定しているので、複数の式を指定したい場合はユーザーが `progn` などで囲む必要があります。
+
+```lisp
+(ppp-macroexpand
+ (config test
+   :preface (setq test-preface 1)
+   :when (executable-find "rg")
+   :require t
+   :config
+   (progn
+     (setq test-config1 1)
+     (setq test-config2 2))))
+;;=> (prog1 'test
+;;     (setq test-preface 1)
+;;     (when (executable-find "rg")
+;;       (require 'test)
+;;       (progn
+;;         (setq test-config1 1)
+;;         (setq test-config2 2))))
+```
+
+
+# キーワードのソート機能の実装
+
+`:preface` と `:config` は `:when` の前に展開されるという特徴があります。 一方でhandlerはそのことを意識していません。つまり今の実装ではユーザーが指定した順番で展開されます。
+
+確かめてみましょう。
+
+```lisp
+(ppp-macroexpand
+ (config test
+   :config (setq test-config 1)
+   :preface (setq test-preface 1)
+   :when (executable-find "rg")
+   :require t))
+;;=> (prog1 'test
+;;     (setq test-config 1)
+;;     (setq test-preface 1)
+;;     (when (executable-find "rg")
+;;       (require 'test)))
+```
+
+このように `:config` が `:preface` よりも前に展開されています。 これはユーザーが意図した順番とは異なるので、引数をソートし指定順に依存しないようにしましょう。
+
+plistのソートは今回はこのように実装しました。 `push` して `nreverse` するのはlispのイディオムです。
+
+```lisp
+(defun config-plist-sort (plist)
+  (let (sorted-plist)
+    (dolist (key config-keywords)
+      (when (plist-member plist key)
+        (push key sorted-plist)
+        (push (plist-get plist key) sorted-plist)))
+    (nreverse sorted-plist)))
+
+(config-plist-sort
+ '(:config (setq test-config 1)
+   :preface (setq test-preface 1)
+   :when (executable-find "rg")
+   :require t))
+;;=>(:preface (setq test-preface 1)
+;;   :when (executable-find "rg")
+;;   :require t
+;;   :config (setq test-config 1))
+```
+
+これを使ってキーワードの展開前にplistをソートするようにしましょう。
+
+```lisp
+(defmacro config (name &rest args)
+  (declare (indent defun))
+  (let ((args* (config-sort-plist args)))
+    `(prog1 ',name
+       ,@(config-process-keywords name args* args*))))
+```
+
+そうすると先程上手く展開できなかった例が上手く展開できるようになります。
+
+```lisp
+(ppp-macroexpand
+ (config test
+   :config (setq test-config 1)
+   :preface (setq test-preface 1)
+   :when (executable-find "rg")
+   :require t))
+;;=> (prog1 'test
+;;     (setq test-preface 1)
+;;     (when (executable-find "rg")
+;;       (require 'test)
+;;       (setq test-config 1)))
+```
+
+良いですね。
+
+
+# まとめ
+
+駆け足ですが当初の目標は達成できました。 lispのマクロの強力さを感じることができたのではないでしょうか。 このように目的に合わせたDSLを自由に作れるのがlispの強みです。
+
+読み返してみると `normalizer` は何もしていないので、いらなかったかなと思いましたが、どんどん `config` が発展していくに従って引数の操作部分だけ複数のキーワードで共有したいという場面が出てくるのでそのままにしておきます。
+
+ぜひマクロを怖がらず使ってみてもらえると嬉しいです。
