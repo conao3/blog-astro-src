@@ -1,0 +1,624 @@
+---
+title: 'maturinで始めるRustのPythonバインディング'
+pubDate: 2024-01-07
+---
+
+# はじめに
+
+PydanticがRustで[爆速になるぜ](https://blog.pydantic.dev/blog/2022/07/10/pydantic-v2-plan/)といって、実際に[V2がリリース](https://blog.pydantic.dev/blog/2023/06/30/pydantic-v2-is-here/)されました。
+本当に17倍速くなったかはあまり気にしていませんが、多分速くなっているんでしょう。私はAPIがきれいになったので実務的にはそちらの方が嬉しいと思っています。
+
+さて、Rust実装は[pydantic/pydantic-core](https://github.com/pydantic/pydantic-core)に置かれており、pydanticはこれを使っているようです。
+プロジェクトはmaturinで管理されています。
+maturinに興味が出てきたので触ってみると意外と簡単に使えたので、そのメモです。
+
+課題設定としてはRustで実装された便利クレートがあるとして、それをPythonから使いたいというものです。今回は[cedar-policy](https://github.com/cedar-policy/cedar)を題材にします。
+
+# プロジェクトの作成
+## Install dependency
+
+Python, Rust, maturin, pdmをインストールします。
+
+- Python: [2023年のPython環境構築: pyenv + poetry](https://a.conao3.com/blog/2023/2fcc-9a3e/)
+- Rust: [公式ページ](https://www.rust-lang.org/ja/tools/install)
+
+```bash
+# pipx
+python3 -m pip install --user pipx
+python3 -m pipx ensurepath
+
+# maturin, pdm
+pipx install maturin
+pipx install pdm
+```
+
+## maturin init
+
+maturinプロジェクトを生成します。
+プロンプトでは `pyo3` を選択します。
+
+```bash
+mkdir python-maturin-cedar
+cd python-maturin-cedar
+maturin init
+```
+
+以下の様なファイルが生成されます。
+個人的にポイントなのはGitHub Actionsの設定が生成されていることです。
+タグを付けると自動で複数環境のwheelを作成し、PyPIにリリースされるようになっています。
+
+```bash
+$ tree -a
+.
+├── Cargo.toml
+├── .github
+│   └── workflows
+│       └── CI.yml
+├── .gitignore
+├── pyproject.toml
+└── src
+    └── lib.rs
+```
+
+src/lib.rsには以下の様なコードが生成されています。
+これももう動くようになっており、加算した結果を文字列で返す関数が定義されています。
+
+```rust
+use pyo3::prelude::*;
+
+/// Formats the sum of two numbers as string.
+#[pyfunction]
+fn sum_as_string(a: usize, b: usize) -> PyResult<String> {
+    Ok((a + b).to_string())
+}
+
+/// A Python module implemented in Rust.
+#[pymodule]
+fn python_maturin_cedar(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_function(wrap_pyfunction!(sum_as_string, m)?)?;
+    Ok(())
+}
+```
+
+私のようにGitHubのレポジトリにプレフィックスを付けたい派の人はフォルダ名とプロジェクト名が一致しないため、ここで直しておきます。
+プロジェクト名は `test_maturin_cedar` ということにしました。
+
+```diff
+$ git diff
+diff --git a/Cargo.toml b/Cargo.toml
+index 5fa7570..863521b 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -1,11 +1,11 @@
+ [package]
+-name = "python-maturin-cedar"
++name = "test-maturin-cedar"
+ version = "0.1.0"
+ edition = "2021"
+ 
+ # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+ [lib]
+-name = "python_maturin_cedar"
++name = "test_maturin_cedar"
+ crate-type = ["cdylib"]
+ 
+ [dependencies]
+diff --git a/src/lib.rs b/src/lib.rs
+index db6e797..67edb3e 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -8,7 +8,7 @@ fn sum_as_string(a: usize, b: usize) -> PyResult<String> {
+ 
+ /// A Python module implemented in Rust.
+ #[pymodule]
+-fn python_maturin_cedar(_py: Python, m: &PyModule) -> PyResult<()> {
++fn test_maturin_cedar(_py: Python, m: &PyModule) -> PyResult<()> {
+     m.add_function(wrap_pyfunction!(sum_as_string, m)?)?;
+     Ok(())
+ }
+```
+
+## pdm init
+
+maturinはRust-Python間のみが守備範囲のため、Pythonプロジェクトの管理は別途必要です。
+pdmが良さそうなのでこれを使います。
+
+プロンプトは以下で答えました。pyproject.tomlが既にある状態で更新してくれるのはすごいですね。
+
+```bash
+$ pdm init
+pyproject.toml already exists, update it now.
+Please enter the Python interpreter to use
+0. /home/conao/.anyenv/envs/pyenv/shims/python3 (3.12)
+...
+Please select (0): 
+Would you like to create a virtualenv with /home/conao/.anyenv/envs/pyenv/versions/3.12.0/bin/python3? [y/n] (y): y
+Virtualenv is created successfully at /home/conao/dev/tmp/git/python-maturin-cedar/.venv
+Project name (python-maturin-cedar): test-maturin-cedar
+Project version (0.1.0): 
+Is the project a library that is installable?
+If yes, we will need to ask a few more questions to include the build backend [y/n] (n): y
+Project description (): cedar-policy bindings
+Which build backend to use?
+0. pdm-backend
+1. setuptools
+2. flit-core
+3. hatchling
+Please select (0): 
+License(SPDX name) (MIT): Apache-2.0
+Author name (Naoya Yamashita): 
+Author email (conao3@gmail.com): 
+Python requires('*' to allow any) (>=3.12): 
+Project is initialized successfully
+```
+
+`.gitignore` にいくつかエントリを追加します。
+maturinの.gitignoreは不必要な行が多かったので一旦削除しました。
+
+```bash
+echo > .gitignore
+echo .venv >> .gitignore
+echo __pycache__ >> .gitignore
+echo dist >> .gitignore
+echo .pdm-python >> .gitignore
+echo target >> .gitignore
+echo '*.so' >> .gitignore
+```
+
+また、srcフォルダにプロジェクトフォルダが追加されているので削除します。(このフォルダはRustのツリーなので)
+
+```bash
+rm -rf src/test_maturin_cedar
+```
+
+`pyproject.toml` を少し修正します。
+- build-backendはmaturinを使うので、pdmに変更されているのを戻します。
+- versionがdynamicと設定されているので削除します。
+
+```diff
+$ git diff
+diff --git a/pyproject.toml b/pyproject.toml
+index c282aa2..c1fbece 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,6 +1,6 @@
+ [build-system]
+-requires = ["pdm-backend"]
+-build-backend = "pdm.backend"
++requires = ["maturin>=1.4,<2.0"]
++build-backend = "maturin"
+ 
+ [project]
+ name = "test-maturin-cedar"
+@@ -10,7 +10,6 @@ classifiers = [
+     "Programming Language :: Python :: Implementation :: CPython",
+     "Programming Language :: Python :: Implementation :: PyPy",
+ ]
+-dynamic = ["version"]
+ version = "0.1.0"
+ description = "cedar-policy bindings"
+ authors = [
+```
+
+## 動作確認
+
+`pdm install` でインストールできます。
+
+```bash
+pdm install
+```
+
+動かせるかPythonのREPLでさくっと確認します。
+
+```bash
+$ pdm run python
+Python 3.12.0 (main, Oct 21 2023, 09:50:40) [GCC 13.2.1 20230801] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import test_maturin_cedar
+>>> test_maturin_cedar.sum_as_string(1, 3)
+'4'
+```
+
+ちゃんと動くのはすごいですね。これでRust界とPython界を繋ぐことができました。
+
+## 自動テストの整備
+
+pdmを使っているので、簡単にpytestをインストールできます。
+
+```bash
+pdm add -d pytest pytest-icdiff 
+```
+
+`tests/test_maturin_cedar.py` を作成します。
+
+```python
+import test_maturin_cedar
+
+def test_sum_as_string():
+    assert test_maturin_cedar.sum_as_string(1, 3) == "4"
+```
+
+`pdm run pytest` でテストが通ることを確認します。
+
+```bash
+$ pdm run pytest
+================================== test session starts ===================================
+platform linux -- Python 3.12.0, pytest-7.4.4, pluggy-1.3.0
+rootdir: /home/conao/dev/tmp/git/python-maturin-cedar
+plugins: icdiff-0.9
+collected 1 item                                                                         
+
+tests/test_maturin_cedar.py .                                                      [100%]
+
+=================================== 1 passed in 0.02s ====================================
+```
+
+完璧ですね。maturinで作ったモジュールのテストはPython界から行なうと良いのかなと思います。Rustからもできるのですが、maturinのテストの作法が難しく、結局Python側から使えることを確認する必要があるので。
+
+## pythonレイヤーの追加
+
+maturinで作ったモジュールをPythonから使うことができるようになりましたが、PythonにRustのAPIをそのまま見せると整備が結構大変です。Pythonのモジュールとして使いやすくするために、Rustの手前にPythonレイヤーを追加します。
+
+ドキュメントは[Project Layout/Mixed Rust/Python project](https://www.maturin.rs/project_layout#mixed-rustpython-project)を参考にします。
+
+良く読むと冒頭の例より `python` というフォルダを切る方がおすすめのようなので、これを採用します。
+
+pyproject.tomlで `python` フォルダを使うよと教えます。
+
+```diff
+$ git diff
+diff --git a/pyproject.toml b/pyproject.toml
+index 30e98af..28bb22f 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -21,6 +21,7 @@ license = {text = "Apache-2.0"}
+ 
+ [tool.maturin]
+ features = ["pyo3/extension-module"]
++python-source = "python"
+ 
+ [tool.pdm]
+ package-type = "library"
+```
+
+あとはさくっと用意します。
+
+```bash
+mkdir -p python/test_maturin_cedar
+touch python/test_maturin_cedar/__init__.py
+touch python/test_maturin_cedar/lib.py
+```
+
+`__init__.py` は以下の内容を書きます。
+
+```python
+from .test_maturin_cedar import *
+
+__doc__ = test_maturin_cedar.__doc__
+if hasattr(test_maturin_cedar, "__all__"):
+    __all__ = test_maturin_cedar.__all__
+```
+
+`lib.py` は以下の内容を書きます。
+
+```python
+import itertools
+
+from . import test_maturin_cedar
+
+
+def list_sum_as_string(*args: int) -> list[str]:
+    res: list[str] = []
+
+    for batch in itertools.batched(args, 2):
+        a, b, *_ = batch + (0,)
+        res.append(test_maturin_cedar.sum_as_string(a, b))
+
+    return res
+```
+
+テストを追加します。
+
+```diff
+$ git diff
+diff --git a/tests/test_maturin_cedar.py b/tests/test_maturin_cedar.py
+index 9e89f00..7cf1e57 100644
+--- a/tests/test_maturin_cedar.py
++++ b/tests/test_maturin_cedar.py
+@@ -1,4 +1,10 @@
+ import test_maturin_cedar
++import test_maturin_cedar.lib
+ 
+ def test_sum_as_string():
+     assert test_maturin_cedar.sum_as_string(1, 3) == "4"
++
++
++def test_list_sum_as_string():
++    assert test_maturin_cedar.lib.list_sum_as_string(1, 3, 2, 4) == ["4", "6"]
++    assert test_maturin_cedar.lib.list_sum_as_string(1, 3, 2) == ["4", "2"]
+```
+
+`pdm run pytest` でテストが通ることを確認します。
+
+```bash
+$ pdm run pytest
+============================= test session starts ==============================
+platform linux -- Python 3.12.0, pytest-7.4.4, pluggy-1.3.0
+rootdir: /home/conao/dev/tmp/git/python-maturin-cedar
+plugins: icdiff-0.9
+collected 2 items                                                              
+
+tests/test_maturin_cedar.py ..                                           [100%]
+
+============================== 2 passed in 0.03s ===============================
+```
+
+動きますね。
+
+## typing
+
+maturinで作ったモジュールには型情報がないので、教えてあげる必要があります。
+Rustの型情報から自動生成できるようになるらしいのですが、今のところは手動で定義する必要があります。
+
+```bash
+touch python/test_maturin_cedar/py.typed
+touch python/test_maturin_cedar/test_maturin_cedar.pyi
+```
+
+`py.typed` は空ファイルです。
+PEP561に準拠して型情報があることを示します。
+
+`test_maturin_cedar.pyi` は以下の内容を書きます。
+
+```python
+def sum_as_string(a: int, b: int) -> str: ...
+```
+
+これで型情報を教えることができ、LSPなどで補完が効くようになります。
+
+## リリース
+
+ここまでで一旦PyPIにリリースしてみます。
+
+PyPIのトークンの設定をします。usernameは固定値 `__token__` です。passwordにはPyPIのトークンを設定します。
+
+```bash
+pdm config repository.pypi.username "__token__"
+pdm config repository.pypi.password "pypi-xxx"
+```
+
+リリースします。[^1]
+
+[^1]: `pdm publish` を実行するとwheelを作成してアップロードしようとしてくれるのですが、 `[PublishError]: 400 Client Error: Binary wheel 'test_maturin_cedar-0.1.0-cp312-cp312-linux_x86_64.whl' has an unsupported platform tag 'linux_x86_64'. for url:` で失敗してしまうため、一旦wheelなしでリリースしました。
+初回リリースは単にPyPIで場所を作ってトークンを発行するだけが目的なのでこれで問題ないです。
+(manylinuxにならないといけないっぽいが、なぜlinux_x86_64になってしまうのだろう)
+
+```bash
+pdm build --no-wheel
+pdm publish --no-build
+```
+
+PyPIにリリースできたら、今回のレポジトリに権限を絞ったトークンを作成できるので作成します。
+
+GitHubの当該レポジトリの [Settings] -> [Secrets and variabes] -> [Actions] -> [New repository secret] で登録します。キーの名前は `PYPI_API_TOKEN` です。
+
+先程の手動リリースで `v0.1.0` が消費されたので、 `v0.1.1` とします。
+
+```diff
+$ git diff
+diff --git a/Cargo.toml b/Cargo.toml
+index 863521b..34b770d 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -1,6 +1,6 @@
+ [package]
+ name = "test-maturin-cedar"
+-version = "0.1.0"
++version = "0.1.1"
+ edition = "2021"
+ 
+ # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+diff --git a/pyproject.toml b/pyproject.toml
+index 28bb22f..7428e21 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -10,7 +10,7 @@ classifiers = [
+     "Programming Language :: Python :: Implementation :: CPython",
+     "Programming Language :: Python :: Implementation :: PyPy",
+ ]
+-version = "0.1.0"
++version = "0.1.1"
+ description = "cedar-policy bindings"
+ authors = [
+     {name = "Naoya Yamashita", email = "conao3@gmail.com"},
+```
+
+GitHub Actionsでリリースするためトリガーを叩きます。
+
+```bash
+git commit -am 'bump v0.1.1'
+git push origin HEAD
+git tag v0.1.1
+git push origin v0.1.1
+```
+
+しばらく待つとリリースが完了します。素晴らしいですね。
+
+![](/blob/2024/06481c5c-8f4b-4889-aff0-d832191a2446.png)
+
+PyPIを見に行くとこの様に各環境のwheelが作成されていることが確認できます。
+利用者はこのwheelをダウンロードして利用するため、利用側にはRustのインストールは不要です。便利。
+
+![](/blob/2024/1a7d5bea-c77d-4790-9599-123c9d0530e7.png)
+
+# cedarバインディングの作成
+
+Rustプロジェクトに `cedar-policy` を追加します[^2]。
+
+[^2]: cedar-policyを入れると[s390xでのビルドが失敗する](https://github.com/conao3-playground/python-maturin-cedar/actions/runs/7433672158)ようになります。
+そのためGitHub Actionsのマトリクスから除外します。
+
+```bash
+cargo add cedar-policy
+```
+
+後は `src/lib.rs` でPythonとのインターフェースを追加します。
+バインディングで `pyo3` を選択したので、実際には [`pyo3` のドキュメント](https://pyo3.rs/v0.20.2/module)を参考にしながら実装することになります。
+
+`src/lib.rs` は以下のようになります。いろいろお手軽実装になっていますが、一旦動作はします。
+
+```rust
+use pyo3::prelude::*;
+use cedar_policy as cedar;
+
+/// Formats the sum of two numbers as string.
+#[pyfunction]
+fn sum_as_string(a: usize, b: usize) -> PyResult<String> {
+    Ok((a + b).to_string())
+}
+
+#[pyclass]
+struct Authorizer(cedar::Authorizer);
+
+#[pymethods]
+impl Authorizer {
+    #[new]
+    fn new() -> Self {
+        Self(cedar::Authorizer::new())
+    }
+
+    fn is_authorized(&self, request: [Option<&str>; 3], policy_set: &str) -> bool {
+        let request = cedar::Request::new(
+            request[0].map(|s| s.parse().expect("invalid principal")),
+            request[1].map(|s| s.parse().expect("invalid action")),
+            request[2].map(|s| s.parse().expect("invalid resource")),
+            cedar::Context::empty(),
+            None,
+        ).expect("invalid request");
+        let policy_set = policy_set.parse().expect("invalid policy-set");
+        let response = self.0.is_authorized(&request, &policy_set, &cedar::Entities::empty());
+        match response.decision() {
+            cedar::Decision::Allow => true,
+            _ => false,
+        }
+    }
+}
+
+/// A Python module implemented in Rust.
+#[pymodule]
+fn test_maturin_cedar(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_function(wrap_pyfunction!(sum_as_string, m)?)?;
+    m.add_class::<Authorizer>()?;
+    Ok(())
+}
+```
+
+Python側の `pyi` はこの様になります。
+
+```python
+from typing import Optional
+
+
+def sum_as_string(a: int, b: int) -> str: ...
+
+class Authorizer:
+    def is_authorized(
+        self,
+        request: tuple[Optional[str], Optional[str], Optional[str]],  # principal, action, resource
+        policy_set: str
+    ) -> bool: ...
+```
+
+テストコードです。
+
+```python
+def test_cedar_simple():
+    request = (
+        'User::"alice"',
+        'Action::"update"',
+        'Photo::"VacationPhoto94.jpg"',
+    )
+    policy_set = """
+permit(
+  principal == User::"alice",
+  action    == Action::"update",
+  resource  == Photo::"VacationPhoto94.jpg"
+);
+"""
+    authorizer = test_maturin_cedar.Authorizer()
+    assert authorizer.is_authorized(request, policy_set) == True
+```
+
+さて動くでしょうか。
+
+```bash
+$ pdm run pytest
+============================= test session starts ==============================
+platform linux -- Python 3.12.0, pytest-7.4.4, pluggy-1.3.0
+rootdir: /home/conao/dev/tmp/git/python-maturin-cedar
+plugins: icdiff-0.9
+collected 3 items                                                              
+
+tests/test_maturin_cedar.py ...                                          [100%]
+
+============================== 3 passed in 0.13s ===============================
+```
+
+動きました! これにて目標達成です。
+
+# まとめ
+
+`maturin` を使うとRustをPythonに簡単にバインディングすることができます。
+`maturin` コミュニティの尽力によりリリースも簡単ですし、ドキュメントも豊富です。世界が広がると思うので、ぜひ試してみてください。
+
+最後に[cedarのサンプルコード](https://www.cedarpolicy.com/en/tutorial)を比較しようと思います。
+
+```rust
+use cedar_policy::{Query, PolicySet, Authorizer, Entities, Context, EntityUid};
+
+let principal = EntityUid::from_str("User::\"alice\"").expect("entity parse error");
+let action = EntityUid::from_str("Action::\"update\"").expect("entity parse error");
+let resource = EntityUid::from_str("Photo::\"VacationPhoto94.jpg\"").expect("entity parse error");
+
+let context_json_val: serde_json::value::Value = serde_json::json!({});
+let context = Context::from_json_value(context_json_val, None).unwrap();
+
+let query: Query = Query::new(Some(principal), Some(action), Some(resource), context);
+
+let policies_str = r#"permit(
+  principal == User::"alice", 
+  action    == Action::"update", 
+  resource  == Photo::"VacationPhoto94.jpg"
+);"#;
+let policy_set = PolicySet::from_str(policies_str).expect("policy parse error");
+
+let entities_json = r#"[]"#;
+let entities = Entities::from_json_str(entities_json, None).expect("entity parse error");
+
+let authorizer = Authorizer::new();
+let decision = authorizer.is_authorized(&query, &policy_set, &entities);
+```
+
+一方、今回作成したcedarバインディングで書いたPythonではこんな感じです。
+
+```python
+import test_maturin_cedar
+
+request = (
+    'User::"alice"',
+    'Action::"update"',
+    'Photo::"VacationPhoto94.jpg"',
+)
+policy_set = """
+permit(
+  principal == User::"alice",
+  action    == Action::"update",
+  resource  == Photo::"VacationPhoto94.jpg"
+);
+"""
+
+authorizer = test_maturin_cedar.Authorizer()
+assert authorizer.is_authorized(request, policy_set) == True
+```
+
+これを見ると、やはりRustのフロントエンド言語としてのPythonという領域は思ったより可能性があると感じます。みなさんはどう思いますか？

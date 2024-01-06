@@ -125,14 +125,7 @@ pyenv global 3.11.2 3.10.10 3.9.16
 公式ページのインストール手順に従ってインストールする。
 
 ```bash
-curl -sSL https://install.python-poetry.org | python3 -
-```
-
-`~/.local/bin/` に `poetry` がインストールされるので、 `PATH` に追加されてなかったら追加する。
-
-```bash
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bash_profile
-export PATH="$HOME/.local/bin:$PATH"
+pipx install poetry
 ```
 
 poetryのデフォルトではプロジェクトルートに `.venv` を作らないため、プロジェクトルートに作成するように変更する。
