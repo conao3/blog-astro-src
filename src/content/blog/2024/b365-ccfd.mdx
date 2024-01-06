@@ -393,7 +393,7 @@ pdm config repository.pypi.password "pypi-xxx"
 
 リリースします。[^1]
 
-[^1]: `pdm publish` を実行するとwheelを作成してアップロードしようとしてくれるのですが、 `[PublishError]: 400 Client Error: Binary wheel 'test_maturin_cedar-0.1.0-cp312-cp312-linux_x86_64.whl' has an unsupported platform tag 'linux_x86_64'. for url:` で失敗してしまうため、一旦wheelなしでリリースしました。
+[^1]: `pdm publish` を実行するとwheelを作成してアップロードしようとしてくれるのですが、 `[PublishError]: 400 Client Error: Binary wheel 'test_maturin_cedar-0.1.0-cp312-cp312-linux_x86_64.whl' has an unsupported platform tag 'linux_x86_64'. for url: https://upload.pypi.org/legacy/` で失敗してしまうため、一旦wheelなしでリリースしました。
 初回リリースは単にPyPIで場所を作ってトークンを発行するだけが目的なのでこれで問題ないです。
 (manylinuxにならないといけないっぽいが、なぜlinux_x86_64になってしまうのだろう)
 
