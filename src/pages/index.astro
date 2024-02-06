@@ -25,7 +25,7 @@ const posts = (
             <section>
 				<ul>
 					{
-						posts.slice(0, 5).map((post) => (
+						posts.map((post) => (
 							<li>
 								<FormattedDate date={post.data.pubDate} />
 								<a href={`/blog/${post.slug}/`}>{post.data.title}</a>
