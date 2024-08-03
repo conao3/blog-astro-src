@@ -12,6 +12,8 @@ pubDate: 2024-08-04
 ---
 #+end_export
 
+[[https://tokyo-emacs.connpass.com/event/321255/][東京Emacs勉強会 サマーフェスティバル2024]] の登壇資料です。
+
 * configs                                                          :noexport:
 #+begin_src elisp :exports none
 (defun my:org-md-link (fn &rest args)
@@ -77,9 +79,9 @@ pubDate: 2024-08-04
 - 基本構成
   - =ivy=, =flycheck=, =company=
 
-公開時、 =vertico= が新進気鋭で盛り上がっていたが、あえて保守的なパッケージ選定。
-そのおかげか Emacs 入門記事としてはヒットし、 Google 検索でも公式の直後に表示されるようになった。
-(Emacs-JP 名義だったことも多分に影響している)
+公開時、 =vertico= が新進気鋭で盛り上がっていましたが、あえて保守的なパッケージ選定をしました。
+そのおかげか Emacs 入門記事としてはヒットし、 Google 検索でも公式の直後に表示されるようになりました。
+(Emacs-JP 名義だったことも多分に影響しています)
 
 #+attr_org: :width 2000
 [[file:./../../../../public/blob/2024/d0b36cb2-afec-4e42-a1b7-0a3b830a7365.png]]
@@ -93,16 +95,16 @@ pubDate: 2024-08-04
 私選おすすめ tomoya さん記事。
 
 確かに Emacs の初期学習コストは高い。
-しかし、そのコストを乗り越えて余るほどの力を与えてくれる。
+しかし、そのコストを乗り越えて余るほどの力を与えてくれます。
 
-風になるかどうか決めるのはあなた次第
+風になるかどうか決めるのはあなた次第です。
 
 * Emacs で始める Clojure 入門
 #+attr_org: :width 1500
 [[file:./../../../../public/blob/2024/b8b1d680-f47d-42c6-b5ff-dae53e7a32fa.png]]
 
-Emacs と Clojure の相性はとても良い。
-正確には Clojure hacker たちの時間が大量に Emacs とそのエコシステムに投下されていることにより、この環境がある。
+Emacs と Clojure の相性はとても良いです。
+正確には Clojure hacker たちの時間が大量に Emacs とそのエコシステムに投下されていることにより、この環境があります。
 
 Ref: [[https://batsov.com/articles/2024/02/27/m-x-reloaded-the-second-golden-age-of-emacs/][M-x Reloaded: The Second Golden Age of Emacs - bbatsov]]
 
@@ -118,20 +120,50 @@ I’m reasonably sure that Clojure played a major role in the success of Emacs i
 私は、Clojureが新しいユーザーと新しい貢献者の両方をプロジェクトに引き寄せることによって、近年のEmacsの成功に大きな役割を果たしたと確信している。
 #+end_quote
 
-実際のところ、 Emacs Lisp を覚えた次に Lisp を使ってなにかスタンドアロンのアプリを作りたいとき、 Clojure はとても良い選択肢になる。
-Clojure は イミュータブルなデータ構造を持つ言語として設計されており、 JVM の資産を使いつつ、REPL を通して対話的に爆速開発することができる。
+実際のところ、 Emacs Lisp を覚えた次に Lisp を使ってなにかスタンドアロンのアプリを作りたいとき、 Clojure はとても良い選択肢になります。
+Clojure は イミュータブルなデータ構造を持つ言語として設計されており、 JVM の資産を使いつつ、REPL を通して対話的に爆速開発することができます。
 
 * Emacs で始める Clojure 入門
 ** -> Clojure で始める Emacs 入門 (2025年を生きるためのEmacs入門)
-Post [[https://emacs-jp.github.io/tips/emacs-in-2020][2020年代のEmacs入門]]
+[[https://emacs-jp.github.io/tips/emacs-in-2020][2020年代のEmacs入門]] はプログラミングも初めてですという人向けにあえて保守的なパッケージを選定していました。
+一方で、私が既に移行を終えているパッケージがおすすめされており、コミュニティでのサポート時に多少の心苦しさを感じていました。
+
+今回は中級者 (プログラミング経験あり) を想定し、私が実際に使っているパッケージを紹介し、2025年からのモダン Emacs 環境を構築します。
+なお、この記事では [[https://emacs-jp.github.io/tips/emacs-in-2020][2020年代のEmacs入門]] の「Emacs設定ファイル」に対応するところから進めますので、それ以前の章については先の記事を参照して頂ければと思います。
+
+なお、この記事のスニペットをコピペしてできあがる =init.el= は [[https://github.com/conao3/.emacs.d.2025][conao3/.emacs.d.2025]] に置いてあります。
 
 * Build Emacs
+Emacs をビルドします。
+この方法が一番確実に動きます。
+
+具体的には、Elispの定義ジャンプでEmacsのコアであるC言語のソースに飛ぶときに正常に動きます。
+また、自分でビルドするので、TreesitterやXWidgets、NativeCompile、ImageMagick統合など楽しい機能を有効にできます。
+
+=~/.local/work= を作業ディレクトリとして、 Emacs をビルドします。
+=emacs= というフォルダに Emacs のソースツリーをキャッシュとして持っておき、日付付きのフォルダにコピーしてそのフォルダでビルドします。
+
+ビルド後、 Mac の場合はソースツリーの =nextstep= というフォルダに =Emacs.app= ができているはずなので、適宜 =/Applications= 配下にコピーしてインストールします。
+
+#+begin_src bash
+mkdir -p ~/.local/work
+cd ~/.local/work
+git clone https://github.com/emacs-mirror/emacs.git
+./build-emacs
+#+end_src
+
+=build-emacs= スクリプトは以下です。
+=date= コマンドはBSD版とGNU版の差異が大きいので、適宜環境に合わせて下さい。バックアップを取る目的で日付が欲しいだけです。
+
+また、HEADをビルドするようになっていますが、まずは安定版をビルドしても良いかもしれません。
+安定版はタグが付いており、 =emacs-xx.y= (yは1以上) が安定版です。
+
 #+begin_src bash
 #!/usr/bin/env bash
 
 set -euxo pipefail -o posix
 
-today=$(echo | pype -Mdatetime -e 'print(date.today().strftime("%Y%m%d"))' | python)
+today=$(date +'%Y%m%d')
 
 cd emacs
 git fetch --all
@@ -153,10 +185,12 @@ echo '=== Build Complete ==='
 #+end_src
 
 * leaf - modern =use-package=
+Emacs29から =use-package= が builtin になったため、 =leaf= がインストールしやすくなりました (えっ)
+
 #+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (eval-and-compile
   (customize-set-variable
-   'package-archives '(("gnu"   . "https://elpa.gnu.org/packages/")
+   'package-archives '(("gnu" . "https://elpa.gnu.org/packages/")
                        ("melpa" . "https://melpa.org/packages/")))
   (package-initialize)
   (use-package leaf :ensure t)
@@ -170,25 +204,18 @@ echo '=== Build Complete ==='
 
 (leaf leaf-convert
   :doc "Convert many format to leaf format"
-  :req "emacs-26.1" "leaf-3.6.0" "leaf-keywords-1.1.0" "ppp-2.1"
-  :tag "tools" "emacs>=26.1"
-  :url "https://github.com/conao3/leaf-convert.el"
-  :added "2024-07-13"
-  :emacs>= 26.1
   :ensure t)
 #+end_src
 
-Emacs29から =use-package= が builtin されたため、 =leaf= がインストールしやすくなった (えっ)
-
 * builtinパッケージの設定
-** cus-edit
+** cus-edit - customize の設定
 #+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf cus-edit
   :doc "tools for customizing Emacs and Lisp packages"
   :custom `((custom-file . ,(locate-user-emacs-file "custom.el"))))
 #+end_src
 
-** cus-start
+** cus-start - EmacsのC言語部分で定義された変数などの定義
 #+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf cus-start
   :doc "define customization properties of builtins"
@@ -226,28 +253,28 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
   (keyboard-translate ?\C-h ?\C-?))
 #+end_src
 
-** autorevert
+** autorevert - Emacs外でファイルが更新されたときに更新する
 #+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf autorevert
   :doc "revert buffers when files on disk change"
   :global-minor-mode global-auto-revert-mode)
 #+end_src
 
-** delsel
+** delsel - 選択状態で入力したときに選択範囲を消す
 #+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf delsel
   :doc "delete selection if you insert"
   :global-minor-mode delete-selection-mode)
 #+end_src
 
-** paren
+** paren - カッコのハイライト
 #+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf paren
   :doc "highlight matching paren"
   :global-minor-mode show-paren-mode)
 #+end_src
 
-** simple
+** simple - 編集機能の設定
 #+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf simple
   :doc "basic editing commands for Emacs"
@@ -257,7 +284,7 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
            (eval-expression-print-level . nil)))
 #+end_src
 
-** files
+** files - ファイル入出力の設定
 #+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf files
   :doc "file input and output commands for Emacs"
@@ -270,14 +297,14 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
             (auto-save-visited-interval . 1)))
 #+end_src
 
-** startup
+** startup - 起動時の設定
 #+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf startup
   :doc "process Emacs shell arguments"
   :custom `((auto-save-list-file-prefix . ,(locate-user-emacs-file "backup/.saves-"))))
 #+end_src
 
-** savehist
+** savehist - ミニバッファ履歴の保存
 #+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf savehist
   :doc "Save minibuffer history"
@@ -285,7 +312,7 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
   :global-minor-mode t)
 #+end_src
 
-** flymake
+** flymake - コード診断機能
 #+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf flymake
   :doc "A universal on-the-fly syntax checker"
@@ -294,7 +321,7 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
           ("M-p" . flymake-goto-prev-error))))
 #+end_src
 
-** which-key
+** which-key - キーバインドの補完表示
 #+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf which-key
   :doc "Display available keybindings in popup"
@@ -314,8 +341,8 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
   (exec-path-from-shell-initialize))
 #+end_src
 
-* vertico - 新時代fuzzyfinder
-** vertico
+* vertico - 新時代 fuzzy-finder
+** vertico - 補完候補を縦に並べる
 #+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf vertico
   :doc "VERTical Interactive COmpletion"
@@ -323,7 +350,7 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
   :global-minor-mode t)
 #+end_src
 
-** marginalia
+** marginalia - 補完候補について付随情報を追加する
 #+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf marginalia
   :doc "Enrich existing commands with completion annotations"
@@ -331,7 +358,7 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
   :global-minor-mode t)
 #+end_src
 
-** consult
+** consult - 補完候補を生成する
 #+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf consult
   :doc "Consulting completing-read"
@@ -369,7 +396,7 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
           ("C-r" . consult-history))))
 #+end_src
 
-** affe
+** affe - 非同期で補完候補を生成する
 #+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf affe
   :doc "Asynchronous Fuzzy Finder for Emacs"
@@ -380,7 +407,7 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
          ("C-M-s f" . affe-find)))
 #+end_src
 
-** orderless
+** orderless - 順序違いの絞り込みスタイルの提供
 #+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf orderless
   :doc "Completion style for matching regexps in any order"
@@ -390,7 +417,7 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
            (completion-category-overrides . '((file (styles partial-completion))))))
 #+end_src
 
-** embark
+** embark - 補完候補に対するアクションの提供
 #+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf embark-consult
   :doc "Consult integration for Embark"
@@ -401,7 +428,7 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
           ("C-." . embark-act))))
 #+end_src
 
-** corfu
+** corfu - インライン補完機能の提供
 #+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf corfu
   :doc "COmpletion in Region FUnction"
@@ -415,7 +442,7 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
           ("C-s" . corfu-insert-separator))))
 #+end_src
 
-** cape
+** cape - インライン補完候補の生成
 #+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf cape
   :doc "Completion At Point Extensions"
@@ -425,6 +452,12 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
 #+end_src
 
 * eglot - LSP
+Emacs builtin になった =eglot= を利用します。
+[[https://github.com/jdtsmith/eglot-booster][eglot-booster]] というRustのプロジェクトをビルドしてPATHを通すと爆速になります。
+
+eglotには言語サーバーの自動インストール機能はないため、Emacs外で自分でインストールして、 =PATH= を通す必要があります。
+この点については私が自動インストール機能を提供するソフトウェアを書く予定なので、完成したら追加します。
+
 #+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf eglot
   :doc "The Emacs Client for LSP servers"
@@ -477,6 +510,44 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
 #+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf vim-jp-radio
   :vc ( :url "https://github.com/vim-jp-radio/vim-jp-radio.el"))
+#+end_src
+
+* デモ
+ciderを少し使ってみます。
+
+軽量Clojureである =babashka= をインストールします。
+インストール方法は [[https://github.com/babashka/babashka#installation][公式]] を参照してください。
+
+** プロジェクトの作成
+#+begin_src bash
+mkdir -p ~/dev/tmp/babashka
+cd ~/dev/tmp/babashka
+touch bb.edn
+echo '#!/usr/bin/env bb' > bbdate
+chmod +x bbdate
+#+end_src
+
+** cider-jack-in - REPLの接続
+=bbdate= ファイルを開き、 =C-c M-j (cider-jack-in)= を実行します。
+REPLウィンドウが開き、対話しながら開発することができます。
+
+** bbdateの編集
+以下内容で保存します。
+#+begin_src clojure
+#!/usr/bin/env bb
+
+(defn main [args]
+  (let [date (java.time.LocalDateTime/now)
+        formatter (java.time.format.DateTimeFormatter/ofPattern (first args))]
+    (format. date formatter)))
+
+(println (main *command-line-args*))
+#+end_src
+
+** 実行
+#+begin_src bash
+$ ./bbdate yyyyMMdd
+20240804
 #+end_src
 
 * have fun, with Emacs

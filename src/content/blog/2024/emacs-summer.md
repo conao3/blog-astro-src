@@ -3,10 +3,12 @@ title: 'Emacsで始めるClojureのススメ - Clojure環境構築から始め�
 pubDate: 2024-08-04
 ---
 
+[東京Emacs勉強会 サマーフェスティバル2024](https://tokyo-emacs.connpass.com/event/321255/) の登壇資料です。
+
 
 # 自己紹介 - Conao3
 
-![img](/blob/2024/6c1e2eb9-aeae-4f13-9d3b-9be0e0c39104.jpg)
+![img](./../../../../public/blob/2024/6c1e2eb9-aeae-4f13-9d3b-9be0e0c39104.jpg)
 
 -   業務
     -   Pythonista → Clojurian
@@ -23,14 +25,14 @@ pubDate: 2024-08-04
 
 # 2020年代の Emacs 入門
 
-![img](/blob/2024/781ef476-d00d-4cad-82b8-f327f8242f15.png)
+![img](./../../../../public/blob/2024/781ef476-d00d-4cad-82b8-f327f8242f15.png)
 
 -   基本構成
     -   `ivy`, `flycheck`, `company`
 
-公開時、 `vertico` が新進気鋭で盛り上がっていたが、あえて保守的なパッケージ選定。 そのおかげか Emacs 入門記事としてはヒットし、 Google 検索でも公式の直後に表示されるようになった。 (Emacs-JP 名義だったことも多分に影響している)
+公開時、 `vertico` が新進気鋭で盛り上がっていましたが、あえて保守的なパッケージ選定をしました。 そのおかげか Emacs 入門記事としてはヒットし、 Google 検索でも公式の直後に表示されるようになりました。 (Emacs-JP 名義だったことも多分に影響しています)
 
-![img](/blob/2024/d0b36cb2-afec-4e42-a1b7-0a3b830a7365.png)
+![img](./../../../../public/blob/2024/d0b36cb2-afec-4e42-a1b7-0a3b830a7365.png)
 
 
 # さて、、 Emacs 使っているよ! という人
@@ -38,20 +40,20 @@ pubDate: 2024-08-04
 
 # 風になりたい奴だけが Emacs を使えばいい
 
-![img](/blob/2024/11f37e05-5bfa-43fe-9edf-83293ad76e01.png)
+![img](./../../../../public/blob/2024/11f37e05-5bfa-43fe-9edf-83293ad76e01.png)
 
 私選おすすめ tomoya さん記事。
 
-確かに Emacs の初期学習コストは高い。 しかし、そのコストを乗り越えて余るほどの力を与えてくれる。
+確かに Emacs の初期学習コストは高い。 しかし、そのコストを乗り越えて余るほどの力を与えてくれます。
 
-風になるかどうか決めるのはあなた次第
+風になるかどうか決めるのはあなた次第です。
 
 
 # Emacs で始める Clojure 入門
 
-![img](/blob/2024/b8b1d680-f47d-42c6-b5ff-dae53e7a32fa.png)
+![img](./../../../../public/blob/2024/b8b1d680-f47d-42c6-b5ff-dae53e7a32fa.png)
 
-Emacs と Clojure の相性はとても良い。 正確には Clojure hacker たちの時間が大量に Emacs とそのエコシステムに投下されていることにより、この環境がある。
+Emacs と Clojure の相性はとても良いです。 正確には Clojure hacker たちの時間が大量に Emacs とそのエコシステムに投下されていることにより、この環境があります。
 
 Ref: [M-x Reloaded: The Second Golden Age of Emacs - bbatsov](https://batsov.com/articles/2024/02/27/m-x-reloaded-the-second-golden-age-of-emacs/)
 
@@ -59,7 +61,7 @@ Ref: [M-x Reloaded: The Second Golden Age of Emacs - bbatsov](https://batsov.com
 
 > 昨日、Emacsは現在（2度目の）黄金期を迎えていると思うと書いた。 &#x2026; 私は、Clojureが新しいユーザーと新しい貢献者の両方をプロジェクトに引き寄せることによって、近年のEmacsの成功に大きな役割を果たしたと確信している。
 
-実際のところ、 Emacs Lisp を覚えた次に Lisp を使ってなにかスタンドアロンのアプリを作りたいとき、 Clojure はとても良い選択肢になる。 Clojure は イミュータブルなデータ構造を持つ言語として設計されており、 JVM の資産を使いつつ、REPL を通して対話的に爆速開発することができる。
+実際のところ、 Emacs Lisp を覚えた次に Lisp を使ってなにかスタンドアロンのアプリを作りたいとき、 Clojure はとても良い選択肢になります。 Clojure は イミュータブルなデータ構造を持つ言語として設計されており、 JVM の資産を使いつつ、REPL を通して対話的に爆速開発することができます。
 
 
 # Emacs で始める Clojure 入門
@@ -67,17 +69,40 @@ Ref: [M-x Reloaded: The Second Golden Age of Emacs - bbatsov](https://batsov.com
 
 ## -> Clojure で始める Emacs 入門 (2025年を生きるためのEmacs入門)
 
-Post [2020年代のEmacs入門](https://emacs-jp.github.io/tips/emacs-in-2020)
+[2020年代のEmacs入門](https://emacs-jp.github.io/tips/emacs-in-2020) はプログラミングも初めてですという人向けにあえて保守的なパッケージを選定していました。 一方で、私が既に移行を終えているパッケージがおすすめされており、コミュニティでのサポート時に多少の心苦しさを感じていました。
+
+今回は中級者 (プログラミング経験あり) を想定し、私が実際に使っているパッケージを紹介し、2025年からのモダン Emacs 環境を構築します。 なお、この記事では [2020年代のEmacs入門](https://emacs-jp.github.io/tips/emacs-in-2020) の「Emacs設定ファイル」に対応するところから進めますので、それ以前の章については先の記事を参照して頂ければと思います。
+
+なお、この記事のスニペットをコピペしてできあがる `init.el` は [conao3/.emacs.d.2025](https://github.com/conao3/.emacs.d.2025) に置いてあります。
 
 
 # Build Emacs
+
+Emacs をビルドします。 この方法が一番確実に動きます。
+
+具体的には、Elispの定義ジャンプでEmacsのコアであるC言語のソースに飛ぶときに正常に動きます。 また、自分でビルドするので、TreesitterやXWidgets、NativeCompile、ImageMagick統合など楽しい機能を有効にできます。
+
+`~/.local/work` を作業ディレクトリとして、 Emacs をビルドします。 `emacs` というフォルダに Emacs のソースツリーをキャッシュとして持っておき、日付付きのフォルダにコピーしてそのフォルダでビルドします。
+
+ビルド後、 Mac の場合はソースツリーの `nextstep` というフォルダに `Emacs.app` ができているはずなので、適宜 `/Applications` 配下にコピーしてインストールします。
+
+```bash
+mkdir -p ~/.local/work
+cd ~/.local/work
+git clone https://github.com/emacs-mirror/emacs.git
+./build-emacs
+```
+
+`build-emacs` スクリプトは以下です。 `date` コマンドはBSD版とGNU版の差異が大きいので、適宜環境に合わせて下さい。バックアップを取る目的で日付が欲しいだけです。
+
+また、HEADをビルドするようになっていますが、まずは安定版をビルドしても良いかもしれません。 安定版はタグが付いており、 `emacs-xx.y` (yは1以上) が安定版です。
 
 ```bash
 #!/usr/bin/env bash
 
 set -euxo pipefail -o posix
 
-today=$(echo | pype -Mdatetime -e 'print(date.today().strftime("%Y%m%d"))' | python)
+today=$(date +'%Y%m%d')
 
 cd emacs
 git fetch --all
@@ -101,10 +126,12 @@ echo '=== Build Complete ==='
 
 # leaf - modern `use-package`
 
+Emacs29から `use-package` が builtin になったため、 `leaf` がインストールしやすくなりました (えっ)
+
 ```elisp
 (eval-and-compile
   (customize-set-variable
-   'package-archives '(("gnu"   . "https://elpa.gnu.org/packages/")
+   'package-archives '(("gnu" . "https://elpa.gnu.org/packages/")
                        ("melpa" . "https://melpa.org/packages/")))
   (package-initialize)
   (use-package leaf :ensure t)
@@ -118,21 +145,14 @@ echo '=== Build Complete ==='
 
 (leaf leaf-convert
   :doc "Convert many format to leaf format"
-  :req "emacs-26.1" "leaf-3.6.0" "leaf-keywords-1.1.0" "ppp-2.1"
-  :tag "tools" "emacs>=26.1"
-  :url "https://github.com/conao3/leaf-convert.el"
-  :added "2024-07-13"
-  :emacs>= 26.1
   :ensure t)
 ```
-
-Emacs29から `use-package` が builtin されたため、 `leaf` がインストールしやすくなった (えっ)
 
 
 # builtinパッケージの設定
 
 
-## cus-edit
+## cus-edit - customize の設定
 
 ```elisp
 (leaf cus-edit
@@ -141,7 +161,7 @@ Emacs29から `use-package` が builtin されたため、 `leaf` がインス�
 ```
 
 
-## cus-start
+## cus-start - EmacsのC言語部分で定義された変数などの定義
 
 ```elisp
 (leaf cus-start
@@ -181,7 +201,7 @@ Emacs29から `use-package` が builtin されたため、 `leaf` がインス�
 ```
 
 
-## autorevert
+## autorevert - Emacs外でファイルが更新されたときに更新する
 
 ```elisp
 (leaf autorevert
@@ -190,7 +210,7 @@ Emacs29から `use-package` が builtin されたため、 `leaf` がインス�
 ```
 
 
-## delsel
+## delsel - 選択状態で入力したときに選択範囲を消す
 
 ```elisp
 (leaf delsel
@@ -199,7 +219,7 @@ Emacs29から `use-package` が builtin されたため、 `leaf` がインス�
 ```
 
 
-## paren
+## paren - カッコのハイライト
 
 ```elisp
 (leaf paren
@@ -208,7 +228,7 @@ Emacs29から `use-package` が builtin されたため、 `leaf` がインス�
 ```
 
 
-## simple
+## simple - 編集機能の設定
 
 ```elisp
 (leaf simple
@@ -220,7 +240,7 @@ Emacs29から `use-package` が builtin されたため、 `leaf` がインス�
 ```
 
 
-## files
+## files - ファイル入出力の設定
 
 ```elisp
 (leaf files
@@ -235,7 +255,7 @@ Emacs29から `use-package` が builtin されたため、 `leaf` がインス�
 ```
 
 
-## startup
+## startup - 起動時の設定
 
 ```elisp
 (leaf startup
@@ -244,7 +264,7 @@ Emacs29から `use-package` が builtin されたため、 `leaf` がインス�
 ```
 
 
-## savehist
+## savehist - ミニバッファ履歴の保存
 
 ```elisp
 (leaf savehist
@@ -254,7 +274,7 @@ Emacs29から `use-package` が builtin されたため、 `leaf` がインス�
 ```
 
 
-## flymake
+## flymake - コード診断機能
 
 ```elisp
 (leaf flymake
@@ -265,7 +285,7 @@ Emacs29から `use-package` が builtin されたため、 `leaf` がインス�
 ```
 
 
-## which-key
+## which-key - キーバインドの補完表示
 
 ```elisp
 (leaf which-key
@@ -289,10 +309,10 @@ Emacs29から `use-package` が builtin されたため、 `leaf` がインス�
 ```
 
 
-# vertico - 新時代fuzzyfinder
+# vertico - 新時代 fuzzy-finder
 
 
-## vertico
+## vertico - 補完候補を縦に並べる
 
 ```elisp
 (leaf vertico
@@ -302,7 +322,7 @@ Emacs29から `use-package` が builtin されたため、 `leaf` がインス�
 ```
 
 
-## marginalia
+## marginalia - 補完候補について付随情報を追加する
 
 ```elisp
 (leaf marginalia
@@ -312,7 +332,7 @@ Emacs29から `use-package` が builtin されたため、 `leaf` がインス�
 ```
 
 
-## consult
+## consult - 補完候補を生成する
 
 ```elisp
 (leaf consult
@@ -352,7 +372,7 @@ Emacs29から `use-package` が builtin されたため、 `leaf` がインス�
 ```
 
 
-## affe
+## affe - 非同期で補完候補を生成する
 
 ```elisp
 (leaf affe
@@ -365,7 +385,7 @@ Emacs29から `use-package` が builtin されたため、 `leaf` がインス�
 ```
 
 
-## orderless
+## orderless - 順序違いの絞り込みスタイルの提供
 
 ```elisp
 (leaf orderless
@@ -377,7 +397,7 @@ Emacs29から `use-package` が builtin されたため、 `leaf` がインス�
 ```
 
 
-## embark
+## embark - 補完候補に対するアクションの提供
 
 ```elisp
 (leaf embark-consult
@@ -390,7 +410,7 @@ Emacs29から `use-package` が builtin されたため、 `leaf` がインス�
 ```
 
 
-## corfu
+## corfu - インライン補完機能の提供
 
 ```elisp
 (leaf corfu
@@ -406,7 +426,7 @@ Emacs29から `use-package` が builtin されたため、 `leaf` がインス�
 ```
 
 
-## cape
+## cape - インライン補完候補の生成
 
 ```elisp
 (leaf cape
@@ -418,6 +438,10 @@ Emacs29から `use-package` が builtin されたため、 `leaf` がインス�
 
 
 # eglot - LSP
+
+Emacs builtin になった `eglot` を利用します。 [eglot-booster](https://github.com/jdtsmith/eglot-booster) というRustのプロジェクトをビルドしてPATHを通すと爆速になります。
+
+eglotには言語サーバーの自動インストール機能はないため、Emacs外で自分でインストールして、 `PATH` を通す必要があります。 この点については私が自動インストール機能を提供するソフトウェアを書く予定なので、完成したら追加します。
 
 ```elisp
 (leaf eglot
@@ -477,6 +501,53 @@ Emacs29から `use-package` が builtin されたため、 `leaf` がインス�
 ```elisp
 (leaf vim-jp-radio
   :vc ( :url "https://github.com/vim-jp-radio/vim-jp-radio.el"))
+```
+
+
+# デモ
+
+ciderを少し使ってみます。
+
+軽量Clojureである `babashka` をインストールします。 インストール方法は [公式](https://github.com/babashka/babashka#installation) を参照してください。
+
+
+## プロジェクトの作成
+
+```bash
+mkdir -p ~/dev/tmp/babashka
+cd ~/dev/tmp/babashka
+touch bb.edn
+echo '#!/usr/bin/env bb' > bbdate
+chmod +x bbdate
+```
+
+
+## cider-jack-in - REPLの接続
+
+`bbdate` ファイルを開き、 `C-c M-j (cider-jack-in)` を実行します。 REPLウィンドウが開き、対話しながら開発することができます。
+
+
+## bbdateの編集
+
+以下内容で保存します。
+
+```clojure
+#!/usr/bin/env bb
+
+(defn main [args]
+  (let [date (java.time.LocalDateTime/now)
+        formatter (java.time.format.DateTimeFormatter/ofPattern (first args))]
+    (format. date formatter)))
+
+(println (main *command-line-args*))
+```
+
+
+## 実行
+
+```bash
+$ ./bbdate yyyyMMdd
+20240804
 ```
 
 
