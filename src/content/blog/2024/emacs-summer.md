@@ -115,6 +115,15 @@ echo '=== Build Complete ==='
     (leaf blackout :ensure t)
     :config
     (leaf-keywords-init)))
+
+(leaf leaf-convert
+  :doc "Convert many format to leaf format"
+  :req "emacs-26.1" "leaf-3.6.0" "leaf-keywords-1.1.0" "ppp-2.1"
+  :tag "tools" "emacs>=26.1"
+  :url "https://github.com/conao3/leaf-convert.el"
+  :added "2024-07-13"
+  :emacs>= 26.1
+  :ensure t)
 ```
 
 Emacs29から `use-package` が builtin されたため、 `leaf` がインストールしやすくなった (えっ)

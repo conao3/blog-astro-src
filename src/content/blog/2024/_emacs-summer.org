@@ -5,7 +5,6 @@
 #+export_file_name: emacs-summer
 #+options: toc:nil
 
-* configs
 #+begin_export md
 ---
 title: 'Emacsで始めるClojureのススメ - Clojure環境構築から始めるEmacsのススメ'
@@ -13,6 +12,7 @@ pubDate: 2024-08-04
 ---
 #+end_export
 
+* configs                                                          :noexport:
 #+begin_src elisp :exports none
 (defun my:org-md-link (fn &rest args)
   (let* ((link (nth 0 args))
@@ -25,6 +25,33 @@ pubDate: 2024-08-04
     (apply fn `(,link ,desc ,info))))
 
 (advice-add 'org-md-link :around 'my:org-md-link)
+#+end_src
+
+#+begin_src elisp :exports none :tangle "~/dev/repo/.emacs.d.2025/init.el"
+;;; init.el --- My init.el  -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2020  Naoya Yamashita
+
+;; Author: Naoya Yamashita <conao3@gmail.com>
+
+;; This program is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; My init.el.
+
+;;; Code:
 #+end_src
 
 * 自己紹介 - Conao3
@@ -126,7 +153,7 @@ echo '=== Build Complete ==='
 #+end_src
 
 * leaf - modern =use-package=
-#+begin_src elisp
+#+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (eval-and-compile
   (customize-set-variable
    'package-archives '(("gnu"   . "https://elpa.gnu.org/packages/")
@@ -140,20 +167,29 @@ echo '=== Build Complete ==='
     (leaf blackout :ensure t)
     :config
     (leaf-keywords-init)))
+
+(leaf leaf-convert
+  :doc "Convert many format to leaf format"
+  :req "emacs-26.1" "leaf-3.6.0" "leaf-keywords-1.1.0" "ppp-2.1"
+  :tag "tools" "emacs>=26.1"
+  :url "https://github.com/conao3/leaf-convert.el"
+  :added "2024-07-13"
+  :emacs>= 26.1
+  :ensure t)
 #+end_src
 
 Emacs29から =use-package= が builtin されたため、 =leaf= がインストールしやすくなった (えっ)
 
 * builtinパッケージの設定
 ** cus-edit
-#+begin_src elisp
+#+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf cus-edit
   :doc "tools for customizing Emacs and Lisp packages"
   :custom `((custom-file . ,(locate-user-emacs-file "custom.el"))))
 #+end_src
 
 ** cus-start
-#+begin_src elisp
+#+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf cus-start
   :doc "define customization properties of builtins"
   :preface
@@ -191,28 +227,28 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
 #+end_src
 
 ** autorevert
-#+begin_src elisp
+#+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf autorevert
   :doc "revert buffers when files on disk change"
   :global-minor-mode global-auto-revert-mode)
 #+end_src
 
 ** delsel
-#+begin_src elisp
+#+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf delsel
   :doc "delete selection if you insert"
   :global-minor-mode delete-selection-mode)
 #+end_src
 
 ** paren
-#+begin_src elisp
+#+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf paren
   :doc "highlight matching paren"
   :global-minor-mode show-paren-mode)
 #+end_src
 
 ** simple
-#+begin_src elisp
+#+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf simple
   :doc "basic editing commands for Emacs"
   :custom ((kill-read-only-ok . t)
@@ -222,7 +258,7 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
 #+end_src
 
 ** files
-#+begin_src elisp
+#+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf files
   :doc "file input and output commands for Emacs"
   :global-minor-mode auto-save-visited-mode
@@ -235,14 +271,14 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
 #+end_src
 
 ** startup
-#+begin_src elisp
+#+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf startup
   :doc "process Emacs shell arguments"
   :custom `((auto-save-list-file-prefix . ,(locate-user-emacs-file "backup/.saves-"))))
 #+end_src
 
 ** savehist
-#+begin_src elisp
+#+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf savehist
   :doc "Save minibuffer history"
   :custom `((savehist-file . ,(locate-user-emacs-file "savehist")))
@@ -250,7 +286,7 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
 #+end_src
 
 ** flymake
-#+begin_src elisp
+#+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf flymake
   :doc "A universal on-the-fly syntax checker"
   :bind ((prog-mode-map
@@ -259,7 +295,7 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
 #+end_src
 
 ** which-key
-#+begin_src elisp
+#+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf which-key
   :doc "Display available keybindings in popup"
   :ensure t
@@ -267,7 +303,7 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
 #+end_src
 
 * exec-path-from-shell - シェルから環境変数を引き継ぐ
-#+begin_src elisp
+#+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf exec-path-from-shell
   :doc "Get environment variables such as $PATH from the shell"
   :ensure t
@@ -280,7 +316,7 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
 
 * vertico - 新時代fuzzyfinder
 ** vertico
-#+begin_src elisp
+#+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf vertico
   :doc "VERTical Interactive COmpletion"
   :ensure t
@@ -288,7 +324,7 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
 #+end_src
 
 ** marginalia
-#+begin_src elisp
+#+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf marginalia
   :doc "Enrich existing commands with completion annotations"
   :ensure t
@@ -296,7 +332,7 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
 #+end_src
 
 ** consult
-#+begin_src elisp
+#+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf consult
   :doc "Consulting completing-read"
   :ensure t
@@ -334,7 +370,7 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
 #+end_src
 
 ** affe
-#+begin_src elisp
+#+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf affe
   :doc "Asynchronous Fuzzy Finder for Emacs"
   :ensure t
@@ -345,7 +381,7 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
 #+end_src
 
 ** orderless
-#+begin_src elisp
+#+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf orderless
   :doc "Completion style for matching regexps in any order"
   :ensure t
@@ -355,7 +391,7 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
 #+end_src
 
 ** embark
-#+begin_src elisp
+#+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf embark-consult
   :doc "Consult integration for Embark"
   :ensure t
@@ -366,7 +402,7 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
 #+end_src
 
 ** corfu
-#+begin_src elisp
+#+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf corfu
   :doc "COmpletion in Region FUnction"
   :ensure t
@@ -380,7 +416,7 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
 #+end_src
 
 ** cape
-#+begin_src elisp
+#+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf cape
   :doc "Completion At Point Extensions"
   :ensure t
@@ -389,7 +425,7 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
 #+end_src
 
 * eglot - LSP
-#+begin_src elisp
+#+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf eglot
   :doc "The Emacs Client for LSP servers"
   :hook ((clojure-mode-hook . eglot-ensure))
@@ -403,7 +439,7 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
 #+end_src
 
 * puni - 構造的編集
-#+begin_src elisp
+#+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf puni
   :doc "Parentheses Universalistic"
   :ensure t
@@ -431,16 +467,27 @@ Emacs29から =use-package= が builtin されたため、 =leaf= がインス�
 #+end_src
 
 * cider - Clojure編集環境
-#+begin_src elisp
+#+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf cider
   :doc "Clojure Interactive Development Environment that Rocks"
   :ensure t)
 #+end_src
 
 * vim-jp-radio - ポッドキャストクライアント
-#+begin_src elisp
+#+begin_src elisp :tangle "~/dev/repo/.emacs.d.2025/init.el"
 (leaf vim-jp-radio
   :vc ( :url "https://github.com/vim-jp-radio/vim-jp-radio.el"))
 #+end_src
 
 * have fun, with Emacs
+
+* footer                                                           :noexport:
+#+begin_src elisp :exports none :tangle "~/dev/repo/.emacs.d.2025/init.el"
+(provide 'init)
+
+;; Local Variables:
+;; indent-tabs-mode: nil
+;; End:
+
+;;; init.el ends here
+#+end_src
