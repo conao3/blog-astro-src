@@ -8,7 +8,7 @@ pubDate: 2024-08-04
 
 # 自己紹介 - Conao3
 
-![img](./../../../../public/blob/2024/6c1e2eb9-aeae-4f13-9d3b-9be0e0c39104.jpg)
+![img](/blob/2024/6c1e2eb9-aeae-4f13-9d3b-9be0e0c39104.jpg)
 
 -   業務
     -   Pythonista → Clojurian
@@ -25,14 +25,14 @@ pubDate: 2024-08-04
 
 # 2020年代の Emacs 入門
 
-![img](./../../../../public/blob/2024/781ef476-d00d-4cad-82b8-f327f8242f15.png)
+![img](/blob/2024/781ef476-d00d-4cad-82b8-f327f8242f15.png)
 
 -   基本構成
     -   `ivy`, `flycheck`, `company`
 
 公開時、 `vertico` が新進気鋭で盛り上がっていましたが、あえて保守的なパッケージ選定をしました。 そのおかげか Emacs 入門記事としてはヒットし、 Google 検索でも公式の直後に表示されるようになりました。 (Emacs-JP 名義だったことも多分に影響しています)
 
-![img](./../../../../public/blob/2024/d0b36cb2-afec-4e42-a1b7-0a3b830a7365.png)
+![img](/blob/2024/d0b36cb2-afec-4e42-a1b7-0a3b830a7365.png)
 
 
 # さて、、 Emacs 使っているよ! という人
@@ -40,7 +40,7 @@ pubDate: 2024-08-04
 
 # 風になりたい奴だけが Emacs を使えばいい
 
-![img](./../../../../public/blob/2024/11f37e05-5bfa-43fe-9edf-83293ad76e01.png)
+![img](/blob/2024/11f37e05-5bfa-43fe-9edf-83293ad76e01.png)
 
 私選おすすめ tomoya さん記事。
 
@@ -51,7 +51,7 @@ pubDate: 2024-08-04
 
 # Emacs で始める Clojure 入門
 
-![img](./../../../../public/blob/2024/b8b1d680-f47d-42c6-b5ff-dae53e7a32fa.png)
+![img](/blob/2024/b8b1d680-f47d-42c6-b5ff-dae53e7a32fa.png)
 
 Emacs と Clojure の相性はとても良いです。 正確には Clojure hacker たちの時間が大量に Emacs とそのエコシステムに投下されていることにより、この環境があります。
 

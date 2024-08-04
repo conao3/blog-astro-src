@@ -29,6 +29,8 @@ pubDate: 2024-08-04
 (advice-add 'org-md-link :around 'my:org-md-link)
 #+end_src
 
+#+RESULTS:
+
 #+begin_src elisp :exports none :tangle "~/dev/repo/.emacs.d.2025/init.el"
 ;;; init.el --- My init.el  -*- lexical-binding: t; -*-
 
