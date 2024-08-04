@@ -66,6 +66,7 @@ pubDate: 2024-08-04
   - 広島 → 目黒
   - Pythonista → Clojurian
   - せっかく上京してきたので遊んでくれる人募集してます！
+    - 具体的にはVim-jpの #event-ramen で「ラーメン行きたい」と呟くと召喚できます！
 
 - 趣味
   - EmacsLisp
