@@ -585,7 +585,13 @@ sys 0.01
 #+end_src
 
 * Happy hacking, with Emacs
-Emacsこわくないよ！なにか質問等あれば Emacs-jp or Vim-jp(#tech-emacs) にて！
+Emacsこわくないよ！
+なにか質問等あれば Emacs-jp or Vim-jp(#tech-emacs) にて！
+
+近々Clojureの勉強会をしようと思っているので、興味がある方はVim-jpの #tech-lisp にぜひぜひ参加お願いします!
+
+- スライド(記事) :: https://a.conao3.com/blog/2024/7c7c265
+- スライド(元ソース) :: [[https://github.com/conao3/blog-astro-src/blob/master/src/content/blog/2024/_7c7c265.org][https://github.com/conao3/blog-astro-src/.../src/content/blog/2024/_7c7c265.org]]
 
 * footer                                                           :noexport:
 #+begin_src elisp :exports none :tangle "~/dev/repo/.emacs.d.2025/init.el"
