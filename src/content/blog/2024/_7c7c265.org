@@ -97,7 +97,7 @@ Emacs と Clojure の相性はとても良いです。
 正確には Clojure hacker たちの時間が大量に Emacs とそのエコシステムに投下されていることにより、この環境があります。
 
 Ref: [[https://batsov.com/articles/2024/02/27/m-x-reloaded-the-second-golden-age-of-emacs/][M-x Reloaded: The Second Golden Age of Emacs - bbatsov]]
-  - babatsov: Robocop, cider, projectile作者
+  - bbatsov: Robocop, cider, projectile作者
 
 #+begin_quote
 Yesterday I wrote that I think Emacs is currently experiencing its (second) Golden Age.
