@@ -248,7 +248,7 @@ Collections
   (defvar conao3-clojure-ts-mode--indent-rules
   `((conao3-clojure
      ((parent-is "list") (nth-sibling 1) define))))
-  
+
   (define-derived-mode conao3-clojure-ts-mode prog-mode "[conao3]Clojure"
     (unless (treesit-language-available-p 'conao3-clojure)
       (treesit-install-language-grammar 'conao3-clojure))
@@ -369,7 +369,7 @@ Emacsがtree-sitterパーサによってどのように理解しているかは 
 ** Outline minor mode
 =treesit-simple-imenu-settings= を設定していれば =outline-minor-mode= で使えるようになるらしい。
 
-=M-x outline-minor-mode=, =M-x outline-cycle= 
+=M-x outline-minor-mode=, =M-x outline-cycle=
 
 ** コメント
 =M-;= でコメント追加するやつ。
@@ -390,5 +390,6 @@ Clojure学んでみたい。。？本を書きました!!
 11/2 (来週日曜日) 池袋です。
 「技術書典17 clojure」で検索してみてください。
 
-Clojureの標準モジュールであるclojure.coreを網羅的に解説しました。ぜひお手に取ってみてください!
+https://techbookfest.org/product/f7rPGt7NeeDuqxYdE3Teyc
 
+Clojureの標準モジュールであるclojure.coreを網羅的に解説しました。ぜひお手に取ってみてください!
