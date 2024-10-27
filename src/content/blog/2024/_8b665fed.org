@@ -1,0 +1,394 @@
+#+title: Clojureで始めるTree-sitter
+#+author: conao3
+
+#+export_file_name: 8b665fed
+#+options: toc:nil
+
+#+begin_export md
+---
+title: 'Clojureで始めるTree-sitter'
+pubDate: 2024-10-26
+---
+#+end_export
+
+東京Emacs勉強会オクトーバーフェスティバル2024の登壇資料です。
+
+* 自己紹介 - Conao3
+attr_org: :width 300
+[[file:./../../../../public/blob/2024/6c1e2eb9-aeae-4f13-9d3b-9be0e0c39104.jpg]]
+
+- 転職しました！
+  - 広島 → 目黒
+  - Pythonista → Clojurian
+  - せっかく上京してきたので遊んでくれる人募集してます！
+    - 具体的にはVim-jpの #event-ramen で「ラーメン行きたい」と呟くと召喚できます！
+
+- 趣味
+  - EmacsLisp
+    - Author: leaf, seml-mode, org-generate, keg,,,
+    - Co-maintainer: ddskk, cask,,,
+
+- 興味
+  - Lisp, Type, Compiler, GraphQL
+
+* アジェンダ
+- Emacs meets tree-sitter
+- tree-sitterパーサの作り方
+- tree-sitterパーサをEmacsから使う
+
+  この記事で紹介するtreesitterパーサ及びEmacsの設定は [[https://github.com/conao3-playground/tree-sitter-conao3-clojure][github.com/conao3-playground/tree-sitter-conao3-clojure]]に置いてあります。
+
+* Emacs meets tree-sitter
+Emacs 29でtree-sitterサポートがビルトインになった。
+
+tree-sitterの登場により、エディタそれぞれでハイライトの実装をしなくてよい。
+ある種、ハイライト分野のLSP。
+
+速い!!
+
+なお、tree-sitter.elはtreesit.elとしてビルトインされたので、ネット上の情報を調べるのはこの知識があると調べやすい。
+
+* tree-sitterパーサの作り方
+[[https://tree-sitter.github.io/tree-sitter/creating-parsers][tree-sitter/creating-parser]] が丁寧に書いてある。
+
+** tree-sitter-cliのインストール
+まず対象の言語を決めて、 =tree-sitter-cli= を入れる。
+
+#+begin_src bash
+language=conao3-clojure
+
+mkdir tree-sitter-${language}
+cd tree-sitter-${language}
+
+npm init
+npm install tree-sitter-cli --save-dev
+#+end_src
+
+** tree-sitter init
+initする。
+
+#+begin_src bash
+npx tree-sitter init
+#+end_src
+
+grammar.jsが文法ファイル。生成時点はこのような内容。
+#+begin_src js
+module.exports = grammar({
+  name: "conao3_bash",
+
+  rules: {
+    // TODO: add the actual grammar rules
+    source_file: $ => "hello"
+  }
+});
+#+end_src
+
+** tree-sitter generate
+文法ファイルからパーサを生成する。
+
+#+begin_src bash
+npx tree-sitter generate
+#+end_src
+
+Cで書かれたパーサが生成される。
+#+begin_src bash
+	new file:   src/grammar.json
+	new file:   src/node-types.json
+	new file:   src/parser.c
+	new file:   src/tree_sitter/alloc.h
+	new file:   src/tree_sitter/array.h
+	new file:   src/tree_sitter/parser.h
+#+end_src
+
+** tree-sitter parse
+使ってみる。
+
+#+begin_src bash
+echo hello > tmp
+npx tree-sitter parse tmp
+#+end_src
+
+このような結果が表示される
+#+begin_src bash
+(source_file [0, 0] - [1, 0])
+#+end_src
+
+** tree-sitter test
+テストランナーが付属している。
+
+=test/corpus/basic.txt= を以下の内容で用意する。
+#+begin_src bash
+=====
+Basic
+=====
+
+hello
+
+---
+
+(source_file)
+#+end_src
+
+実行
+#+begin_src bash
+npx tree-sitter test
+#+end_src
+
+
+結果
+#+begin_src bash
+   basic:
+      1. ✓ Basic
+#+end_src
+
+実際のところ、テストを実行するためには事前にパーサを生成しておく必要があるので、連続で実行するようにしておくと良い。
+
+#+begin_src bash
+npx tree-sitter generate && npx tree-sitter test
+#+end_src
+
+** Clojureの文法ファイル
+Clojureをパースするために書いたのはこちら。
+#+begin_src js
+module.exports = grammar({
+  name: "conao3_clojure",
+
+  rules: {
+    source_file: $ => repeat($._form),
+
+    _form: $ => choice(
+      $.list,
+      $.vector,
+      $.map,
+      $.set,
+
+      $.string,
+      $.number,
+      $.symbol,
+      $.character,
+      $.nil,
+      $.boolean,
+      $.keyword,
+    ),
+
+    list: $ => seq("(", repeat($._form), ")"),
+    vector: $ => seq("[", repeat($._form), "]"),
+    map: $ => seq("{", repeat($._form), repeat($._form), "}"),
+    set: $ => seq("#{", repeat($._form), "}"),
+
+    string: $ => /"[^"]*"/,
+    number: $ => token(seq(/[+-]?/, choice(/\d+/, /\d*\.\d+/))),
+    symbol: $ => /'[^()\[\]{}'"\s]+/,
+    character: $ => /\\./,
+    nil: $ => "nil",
+    boolean: $ => choice("true", "false"),
+    keyword: $ => /:[^()\[\]{}'"\s]+/,
+  },
+});
+#+end_src
+
+簡略化されているが、それでもこれくらいのものはパースできるようになっている。
+
+#+begin_src clojure
+=====
+Basic
+=====
+
+"a"
+42 3.14
+a
+\a
+nil
+true false
+:a
+
+---
+
+(source_file
+  (string)
+  (number) (number)
+  (symbol)
+  (character)
+  (nil)
+  (boolean) (boolean)
+  (keyword))
+
+===========
+Collections
+===========
+
+(a b c)
+[a b c]
+{:a 1 :b 2 :c 3}
+#{a b c}
+
+---
+
+(source_file
+  (list
+    (symbol) (symbol) (symbol))
+  (vector
+    (symbol) (symbol) (symbol))
+  (map
+    (keyword) (number)
+    (keyword) (number)
+    (keyword) (number))
+  (set
+    (symbol) (symbol) (symbol)))
+#+end_src
+
+* tree-sitterパーサをEmacsから使う
+** 設定
+#+begin_src elisp
+(leaf *treesit
+  :custom ((treesit-font-lock-level . 4))
+  :config
+  (require 'treesit)
+
+  (defvar conao3-clojure-ts-mode--indent-rules
+  `((conao3-clojure
+     ((parent-is "list") (nth-sibling 1) define))))
+  
+  (define-derived-mode conao3-clojure-ts-mode prog-mode "[conao3]Clojure"
+    (unless (treesit-language-available-p 'conao3-clojure)
+      (treesit-install-language-grammar 'conao3-clojure))
+
+    (setq treesit-primary-parser (treesit-parser-create 'conao3-clojure))
+
+    ;; ここでいろいろ準備する
+
+    (treesit-major-mode-setup))
+
+  (add-to-list 'auto-mode-alist '("\\.clj[sc]?\\'" . clojure-mode))
+  (add-to-list 'auto-mode-alist '("\\.edn\\'" . clojure-mode))
+  (add-to-list 'major-mode-remap-alist '(clojure-mode . conao3-clojure-ts-mode))
+  (add-to-list 'treesit-language-source-alist
+               '(conao3-clojure "https://github.com/conao3-playground/tree-sitter-conao3-clojure")))
+#+end_src
+
+こんな感じで書く。
+
+** 使い方
+このメジャーモードを実行する。具体的には以下の内容を記述した適当なcljファイルを開く。
+
+#+begin_src clojure
+"a"
+(a b c)
+{:a 1 :b 2 :c 3}
+#+end_src
+
+そうするとこのような感じで出力され、自動的にtree-sitterパーサのclone及びコンパイル、インストールが行われる。便利。
+#+begin_src txt
+Cloning repository
+Compiling library
+Library installed to /Users/conao/.debug.emacs.d/eglot-clojure-lsp/tree-sitter/libtree-sitter-conao3-clojure.dylib
+#+end_src
+
+Emacsがtree-sitterパーサによってどのように理解しているかは =M-x treesit-explore-mode= を見ると分かりやすい。
+
+** treesit-major-mode-setup
+=treesit-major-mode-setup= が便利関数。
+ドキュメントを要約するとこんなことをするらしい。
+
+#+begin_src elisp
+;; `treesit-font-lock-settings'
+;; -> set up fontification and enable `font-lock-mode'.
+
+;; `treesit-simple-indent-rules'
+;; -> set up indentation.
+
+;; `treesit-defun-type-regexp' or `defun' is defined in `treesit-thing-settings'
+;; -> set up `beginning-of-defun-function' and `end-of-defun-function'.
+
+;; `treesit-defun-name-function'
+;; -> set up `add-log-current-defun'.
+
+;; `treesit-simple-imenu-settings'
+;; -> set up Imenu.
+
+;; If either `treesit-outline-predicate' or `treesit-simple-imenu-settings'
+;; -> setup Outline minor mode.
+
+;; If `sexp', `sentence' are defined in `treesit-thing-settings'
+;; -> enable tree-sitter navigation commands for them.
+#+end_src
+
+これらの変数を =treesit-major-mode-setup= の前に設定しておくと、関連する設定をいい感じにやってくれて便利
+
+** コードハイライト
+これを追加する。
+#+begin_src elisp
+(setq-local treesit-font-lock-settings
+            (treesit-font-lock-rules
+             :language 'conao3-clojure
+             :feature 'all
+             '(((keyword) @font-lock-keyword-face)
+               ((string) @font-lock-string-face)
+               ((number) @font-lock-constant-face)
+               ((symbol) @font-lock-function-name-face)
+               ((boolean) @font-lock-builtin-face)
+               ((nil) @font-lock-constant-face))))
+
+(setq-local treesit-font-lock-feature-list '((all)))
+#+end_src
+
+** インデント
+これを追加する
+#+begin_src elisp
+(setq-local treesit-simple-indent-rules
+            '((conao3-clojure
+               ((parent-is "list") parent-bol 1)
+               ((parent-is "vector") parent-bol 1)
+               ((parent-is "map") parent-bol 1)
+               ((parent-is "set") parent-bol 1)
+               (no-node parent-bol 0))))
+#+end_src
+
+** thing-at-point
+=treesit-defun-type-regexp= or =defun= is defined in =treesit-thing-settings=
+-> set up =beginning-of-defun-function= and =end-of-defun-function=.
+
+わかりませんでした!!
+
+** treesit-defun-name-function
+わかりませんでした!!
+そもそも =add-log-current-defun= って何？
+
+** iMenu
+バッファの中で重要そうな行を抽出する機能。
+これを追加する。詳細は要調査。
+
+#+begin_src elisp
+(setq-local treesit-simple-imenu-settings
+            '(("List" "\\`list\\'" nil nil)
+              ("Vector" "\\`vector\\'" nil nil)
+              ("Map" "\\`map\\'" nil nil)
+              ("Set" "\\`set\\'" nil nil)))
+#+end_src
+
+** Outline minor mode
+=treesit-simple-imenu-settings= を設定していれば =outline-minor-mode= で使えるようになるらしい。
+
+=M-x outline-minor-mode=, =M-x outline-cycle= 
+
+** コメント
+=M-;= でコメント追加するやつ。
+これを追加する。
+
+#+begin_src elisp
+(setq comment-start "; ")
+#+end_src
+
+* まとめ
+- tree-sitter (treesit) により、エディタに依存したそれぞれのパーサを作るのではなく、「言語のパーサ」として異なるエディタのユーザーが共同で作りあげられるようになった。
+- tree-sitterパーサを作るのは (簡単には) 簡単に作れるので、やってみると便利
+- そのtree-sitterパーサに依存したメジャーモードを作るのも簡単
+- ぜひやってみてください
+
+* 告知
+Clojure学んでみたい。。？本を書きました!!
+11/2 (来週日曜日) 池袋です。
+「技術書典17 clojure」で検索してみてください。
+
+Clojureの標準モジュールであるclojure.coreを網羅的に解説しました。ぜひお手に取ってみてください!
+
