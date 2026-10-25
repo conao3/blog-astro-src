@@ -55,7 +55,7 @@ Nextのようにファイルベースルーティングを採用しているの�
 
 現在時点の公式ブログテンプレートにはなぜか `draft` の対応が入っていない。ので、この対応をすることで `.astro` の基本的な使い方を紹介する。
 
-まずは `src/content/config.ts` でfrontmatterに `draft` があるということを定義する。デフォルトは `false` (公開) にしておく。
+まずは `src/content.config.ts` でfrontmatterに `draft` があるということを定義する。デフォルトは `false` (公開) にしておく。
 
 ```diff
  import { defineCollection, z } from 'astro:content';
