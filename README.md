@@ -4,6 +4,12 @@ A personal blog built with [Astro](https://astro.build), based on the official A
 
 ## Features
 
+![Blog post with a hero image, title, and publish date](images/post.png)
+
+![MDX post with a highlighted code block, KaTeX math, a callout, a button, and a flow chart](images/mdx.png)
+
+Screenshots show a local build filled with sample posts.
+
 - Minimal, clean styling
 - Excellent Lighthouse performance scores
 - SEO-friendly with canonical URLs and OpenGraph data
@@ -40,6 +46,10 @@ All commands are run from the project root:
 | `npm run build`        | Build production site to `./dist/`               |
 | `npm run preview`      | Preview build locally before deploying           |
 | `npm run astro ...`    | Run CLI commands like `astro add`, `astro check` |
+
+![Home page listing blog posts by date](images/home.png)
+
+Screenshots show a local build filled with sample posts.
 
 ## Learn More
 
