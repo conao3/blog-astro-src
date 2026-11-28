@@ -1,4 +1,12 @@
-# blog-astro-src
+<p align="center"><img src="docs/assets/banner.png" alt="blog-astro-src: A personal blog built with Astro for Markdown and MDX posts" width="880"></p>
+
+<p align="center"><strong>A personal blog built with Astro for Markdown and MDX posts</strong></p>
+
+<p align="center"><a href="https://github.com/conao3/blog-astro-src/stargazers"><img src="https://img.shields.io/github/stars/conao3/blog-astro-src?style=flat" alt="GitHub stars"></a></p>
+
+<p align="center"><a href="#features">Features</a> | <a href="#getting-started">Getting Started</a> | <a href="#learn-more">Learn More</a> | <a href="#credit">Credit</a></p>
+
+<h1>blog-astro-src</h1>
 
 A personal blog built with [Astro](https://astro.build), based on the official Astro Blog template.
 
